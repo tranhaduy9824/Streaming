@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Livestream Room</title>
+</head>
+<body>
+<h1>Livestream Room</h1>
+<input type="text" id="roomName" placeholder="Enter room name">
+<button onclick="createRoom()">Create Room</button>
+<button onclick="joinRoom()">Join Room</button>
+<div id="messages"></div>
+<div id="roomList"></div>
+
+<script>
+    let websocket;
+
+    document.getElementById('roomName').addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            joinRoom();
+        }
+    });
+
+    function createRoom() {
+        const roomName = document.getElementById('roomName').value;
+        websocket = new WebSocket('ws://localhost:8080/signal');
+
+        websocket.onopen = function() {
+            console.log('Connected to signaling server');
+            websocket.send('CREATE:' + roomName);
+        };
+
+        websocket.onmessage = function(event) {
+            handleServerMessage(event.data);
+        };
+
+        websocket.onclose = function() {
+            console.log('Disconnected from signaling server');
+        };
+    }
+
+    function joinRoom() {
+        const roomName = document.getElementById('roomName').value;
+        websocket = new WebSocket('ws://localhost:8080/signal');
+
+        websocket.onopen = function() {
+            console.log('Connected to signaling server');
+            websocket.send('JOIN:' + roomName);
+        };
+
+        websocket.onmessage = function(event) {
+            handleServerMessage(event.data);
+        };
+
+        websocket.onclose = function() {
+            console.log('Disconnected from signaling server');
+        };
+    }
+
+    function handleServerMessage(message) {
+        const messagesDiv = document.getElementById('messages');
+        if (message.startsWith('ROOMS:')) {
+            const roomList = message.substring(6).split(',');
+            const roomListDiv = document.getElementById('roomList');
+            roomListDiv.innerHTML = '<h2>Available Rooms</h2>';
+            roomList.forEach(room => {
+                roomListDiv.innerHTML += '<p>' + room + '</p>';
+            });
+        } else {
+            messagesDiv.innerHTML += '<p>' + message + '</p>';
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,39 +1,74 @@
 package org.example.server;
 
-import jakarta.websocket.OnClose;
-import jakarta.websocket.OnMessage;
-import jakarta.websocket.OnOpen;
-import jakarta.websocket.Session;
+import jakarta.websocket.*;
 import jakarta.websocket.server.ServerEndpoint;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 @ServerEndpoint("/signal")
-public class SignalingServer {
-    private static Set<Session> sessions = new HashSet<>();
+public class SignalingServer extends Thread {
+    private static final Logger logger = Logger.getLogger(SignalingServer.class.getName());
+    private static Map<String, Set<Session>> rooms = new HashMap<>();
+
+    @Override
+    public void run() {
+        logger.info("Signaling Server started.");
+        try {
+            Thread.sleep(Long.MAX_VALUE);
+        } catch (InterruptedException e) {
+            logger.severe("Signaling Server interrupted: " + e.getMessage());
+        }
+    }
 
     @OnOpen
     public void onOpen(Session session) {
-        sessions.add(session);
-        System.out.println("Client connected: " + session.getId());
+        logger.info("Client connected: " + session.getId());
+        broadcastRoomList();
     }
 
     @OnMessage
     public void onMessage(String message, Session session) {
-        for (Session s : sessions) {
-            if (!s.equals(session)) {
-                s.getAsyncRemote().sendText(message);
+        logger.info("Received message: " + message);
+        if (message.startsWith("CREATE:")) {
+            String roomName = message.substring(7);
+            rooms.putIfAbsent(roomName, new HashSet<>());
+            rooms.get(roomName).add(session);
+            sendMessageToClient(session, "Room created: " + roomName);
+            logger.info("Room created: " + roomName);
+            broadcastRoomList();
+        } else if (message.startsWith("JOIN:")) {
+            String roomName = message.substring(5);
+            if (rooms.containsKey(roomName)) {
+                rooms.get(roomName).add(session);
+                sendMessageToClient(session, "Joined room: " + roomName);
+                logger.info("Joined room: " + roomName);
+            } else {
+                sendMessageToClient(session, "Room not found: " + roomName);
+                logger.warning("Room not found: " + roomName);
             }
         }
     }
 
     @OnClose
     public void onClose(Session session) {
-        sessions.remove(session);
-        System.out.println("Client disconnected: " + session.getId());
+        rooms.values().forEach(sessions -> sessions.remove(session));
+        logger.info("Client disconnected: " + session.getId());
+        broadcastRoomList();
     }
 
-    public void start() {
-        System.out.println("Signaling server started...");
+    private void sendMessageToClient(Session client, String message) {
+        client.getAsyncRemote().sendText(message);
+    }
+
+    private void broadcastRoomList() {
+        String roomList = "ROOMS:" + String.join(",", rooms.keySet());
+        for (Set<Session> sessions : rooms.values()) {
+            for (Session session : sessions) {
+                sendMessageToClient(session, roomList);
+            }
+        }
     }
 }
