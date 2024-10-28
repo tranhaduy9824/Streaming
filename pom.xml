@@ -23,7 +23,7 @@
         <dependency>
             <groupId>jakarta.websocket</groupId>
             <artifactId>jakarta.websocket-api</artifactId>
-            <version>2.0.0</version> <!-- Chọn phiên bản phù hợp -->
+            <version>2.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.bytedeco</groupId>
