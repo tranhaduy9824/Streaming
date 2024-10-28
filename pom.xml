@@ -23,7 +23,7 @@
         <dependency>
             <groupId>jakarta.websocket</groupId>
             <artifactId>jakarta.websocket-api</artifactId>
-            <version>2.0.0</version> <!-- Chọn phiên bản phù hợp -->
+            <version>2.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.bytedeco</groupId>
@@ -38,18 +38,17 @@
         <dependency>
             <groupId>org.glassfish.tyrus</groupId>
             <artifactId>tyrus-server</artifactId>
-            <version>2.1.0</version> <!-- Thêm phụ thuộc này nếu bạn đang sử dụng server-side -->
+            <version>2.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.glassfish.tyrus</groupId>
             <artifactId>tyrus-client</artifactId>
-            <version>2.1.0</version> <!-- Thêm phụ thuộc này nếu bạn đang sử dụng client-side -->
+            <version>2.1.0</version>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <!-- Maven Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -60,7 +59,6 @@
                 </configuration>
             </plugin>
 
-            <!-- Maven Dependency Plugin to copy native libraries -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>

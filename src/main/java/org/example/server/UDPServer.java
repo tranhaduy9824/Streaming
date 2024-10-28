@@ -2,35 +2,26 @@ package org.example.server;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.logging.Logger;
 
-public class UDPServer {
-    private static final int PORT = 9876;
-    private static final int BUFFER_SIZE = 65536;
-    private DatagramSocket socket;
-    private Set<InetAddress> clientAddresses = new HashSet<>();
+public class UDPServer extends Thread {
+    private static final Logger logger = Logger.getLogger(UDPServer.class.getName());
+    private static final int PORT = 9877;
 
-    public UDPServer() throws Exception {
-        socket = new DatagramSocket(PORT);
-    }
+    @Override
+    public void run() {
+        try (DatagramSocket socket = new DatagramSocket(PORT)) {
+            logger.info("UDP Server started on port " + PORT);
 
-    public void start() throws Exception {
-        System.out.println("UDP Server started on port " + PORT);
-        byte[] buffer = new byte[BUFFER_SIZE];
-
-        while (true) {
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-            socket.receive(packet);
-            clientAddresses.add(packet.getAddress());
-
-            for (InetAddress address : clientAddresses) {
-                if (!address.equals(packet.getAddress())) {
-                    DatagramPacket sendPacket = new DatagramPacket(packet.getData(), packet.getLength(), address, packet.getPort());
-                    socket.send(sendPacket);
-                }
+            byte[] buffer = new byte[1024];
+            while (true) {
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                socket.receive(packet);
+                logger.info("Received UDP packet from " + packet.getAddress() + ":" + packet.getPort());
+                // Process video data here
             }
+        } catch (Exception e) {
+            logger.severe("UDP Server error: " + e.getMessage());
         }
     }
 }
