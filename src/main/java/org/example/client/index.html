@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Livestream App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <h1>Livestream App</h1>
+        <div id="login-register">
+            <h2>Login</h2>
+            <input type="text" id="username" placeholder="Username">
+            <button id="login-button">Login</button>
+            <h2>Register</h2>
+            <input type="text" id="new-username" placeholder="New Username">
+            <button id="register-button">Register</button>
+        </div>
+        <div id="room-list">
+            <h2>Rooms</h2>
+            <ul id="rooms"></ul>
+            <input type="text" id="room-name" placeholder="Room Name">
+            <button id="create-room">Create Room</button>
+        </div>
+        <div id="livestream">
+            <h2>Livestream</h2>
+            <video id="video" autoplay></video>
+            <input type="text" id="comment" placeholder="Comment...">
+            <button id="send-comment">Send Comment</button>
+            <div id="comments"></div>
+        </div>
+    </div>
+    <script src="main.js"></script>
+</body>
+</html>

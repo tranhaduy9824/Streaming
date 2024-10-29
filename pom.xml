@@ -45,6 +45,22 @@
             <artifactId>tyrus-client</artifactId>
             <version>2.1.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.glassfish.tyrus</groupId>
+            <artifactId>tyrus-container-grizzly-client</artifactId>
+            <version>2.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.tyrus</groupId>
+            <artifactId>tyrus-container-grizzly-server</artifactId>
+            <version>2.1.0</version>
+        </dependency>
+        <dependency>
+    <groupId>org.java-websocket</groupId>
+    <artifactId>Java-WebSocket</artifactId>
+    <version>1.5.2</version>
+</dependency>
+
     </dependencies>
 
     <build>
