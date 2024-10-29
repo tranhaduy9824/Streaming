@@ -28,11 +28,43 @@ document.getElementById('send-comment').onclick = () => {
     socket.send(`COMMENT:${comment}`);
 };
 
-// Nhận dữ liệu từ server
 socket.onmessage = (event) => {
-    console.log('Message from server:', event.data);
-    // Cập nhật danh sách phòng và bình luận ở đây
+    const [type, data] = event.data.split(':');
+    switch (type) {
+        case 'ROOM_LIST':
+            updateRoomList(JSON.parse(data));
+            break;
+        case 'COMMENT':
+            addComment(data);
+            break;
+        case 'ICE_CANDIDATE':
+            peerConnection.addIceCandidate(new RTCIceCandidate(JSON.parse(data)));
+            break;
+        case 'ANSWER':
+            peerConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(data)));
+            break;
+        default:
+            console.log('Unknown message type:', type);
+    }
 };
+
+function updateRoomList(rooms) {
+    const roomList = document.getElementById('rooms');
+    roomList.innerHTML = '';
+    rooms.forEach(room => {
+        const li = document.createElement('li');
+        li.textContent = room.name;
+        roomList.appendChild(li);
+    });
+}
+
+function addComment(comment) {
+    const comments = document.getElementById('comments');
+    const commentDiv = document.createElement('div');
+    commentDiv.textContent = comment;
+    comments.appendChild(commentDiv);
+}
+
 
 let localStream;
 let peerConnection;
@@ -41,39 +73,29 @@ const UDP_PORT = 12346; // Cổng UDP để gửi video
 // Khởi tạo WebRTC
 const startWebRTC = async () => {
     try {
-        // Lấy stream video và audio từ thiết bị
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        const video = document.getElementById('video');
-        video.srcObject = localStream;
+        document.getElementById('video').srcObject = localStream;
 
-        // Tạo peer connection
         peerConnection = new RTCPeerConnection();
 
-        // Thêm các track vào peer connection
         localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
-        // Xử lý ICE Candidate
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
                 socket.send(`ICE_CANDIDATE:${JSON.stringify(event.candidate)}`);
             }
         };
 
-        // Nhận track từ remote peer
         peerConnection.ontrack = (event) => {
             const remoteVideo = document.createElement('video');
             remoteVideo.srcObject = event.streams[0];
-            remoteVideo.play();
+            remoteVideo.autoplay = true;
             document.body.appendChild(remoteVideo);
         };
 
-        // Tạo offer
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
         socket.send(`OFFER:${JSON.stringify(offer)}`);
-        
-        // Gửi video qua UDP
-        sendVideoOverUDP(localStream);
     } catch (error) {
         console.error('Error starting WebRTC:', error);
     }
