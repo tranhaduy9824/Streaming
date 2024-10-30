@@ -40,6 +40,7 @@ public class RegistrationPanel extends JPanel {
             String message = "REGISTER:" + username;
             if (LivestreamClient.sendBroadcastMessage(message)) {
                 System.out.println("Sent registration request for username: " + username);
+                LivestreamClient.setUsername(username); // Set the username
                 LivestreamClient.showMainPanel();
             } else {
                 JOptionPane.showMessageDialog(RegistrationPanel.this, "Failed to send registration request.", "Error", JOptionPane.ERROR_MESSAGE);

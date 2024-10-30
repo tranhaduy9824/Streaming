@@ -4,7 +4,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 
 public class MainPanel extends JPanel {
     private JList<String> roomList;
@@ -16,7 +15,7 @@ public class MainPanel extends JPanel {
         refreshButton.addActionListener(new RefreshRoomListActionListener());
         add(refreshButton, BorderLayout.NORTH);
 
-        roomList = new JList<>();
+        roomList = new JList<>(LivestreamClient.getRoomListModel());
         add(new JScrollPane(roomList), BorderLayout.CENTER);
 
         JPanel buttonPanel = new JPanel();
@@ -37,8 +36,7 @@ public class MainPanel extends JPanel {
         @Override
         public void actionPerformed(ActionEvent e) {
             LivestreamClient.sendBroadcastMessage("LIST_ROOMS");
-            List<String> roomNames = LivestreamClient.receiveRoomList();
-            roomList.setListData(roomNames.toArray(new String[0]));
+            // No need to call receiveRoomList() here, as the client will update the room list asynchronously
         }
     }
 
@@ -46,8 +44,9 @@ public class MainPanel extends JPanel {
         @Override
         public void actionPerformed(ActionEvent e) {
             String roomName = JOptionPane.showInputDialog(MainPanel.this, "Enter room name:");
+            String username = LivestreamClient.getUsername(); // Get the stored username
             if (roomName != null && !roomName.trim().isEmpty()) {
-                LivestreamClient.sendBroadcastMessage("CREATE_ROOM:" + roomName);
+                LivestreamClient.sendBroadcastMessage("CREATE_ROOM:" + username + ":" + roomName);
             }
         }
     }

@@ -6,14 +6,16 @@ import java.util.Map;
 public class RoomManager {
     private Map<String, Room> rooms;
 
-    public RoomManager() {
-        rooms = new HashMap<>();
+    public RoomManager(UDPBroadcastServer udpBroadcastServer) {
+        this.rooms = new HashMap<>();
     }
 
-    public synchronized void createRoom(String roomName) {
-        if (!rooms.containsKey(roomName)) {
-            rooms.put(roomName, new Room(roomName));
-            System.out.println("Room created: " + roomName);
+    public synchronized void createRoom(String roomName, String owner) {
+        if (roomName != null && !roomName.trim().isEmpty() && !rooms.containsKey(roomName)) {
+            rooms.put(roomName, new Room(roomName, owner));
+            System.out.println("Room created: " + roomName + " by " + owner);
+        } else {
+            System.out.println("Failed to create room: " + roomName);
         }
     }
 

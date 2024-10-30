@@ -10,7 +10,7 @@ public class WebRTCSignalingServer extends Thread {
     @Override
     public void run() {
         try {
-            socket = IO.socket("http://" + ServerConfig.BROADCAST_ADDRESS + ":" + ServerConfig.WEBSOCKET_PORT);
+            socket = IO.socket("http://" + ServerConfig.BROADCAST_ADDRESS + ":" + ServerConfig.BROADCAST_PORT);
             socket.connect();
             // Handle signaling messages for WebRTC
         } catch (Exception e) {
