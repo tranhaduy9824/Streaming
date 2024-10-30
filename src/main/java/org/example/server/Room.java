@@ -2,26 +2,26 @@ package org.example.server;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.net.Socket;
 
 public class Room {
-    private String name;
-    private List<Socket> participants;
+    private String roomName;
+    private List<Participant> participants;
 
-    public Room(String name) {
-        this.name = name;
+    public Room(String roomName) {
+        this.roomName = roomName;
         this.participants = new ArrayList<>();
     }
 
-    public String getName() {
-        return name;
+    public void addParticipant(Participant participant) {
+        participants.add(participant);
     }
 
-    public void addParticipant(Socket socket) {
-        participants.add(socket);
+    public String getRoomName() {
+        return roomName;
     }
 
-    public List<Socket> getParticipants() {
+    public List<Participant> getParticipants() {
         return participants;
     }
 }
+

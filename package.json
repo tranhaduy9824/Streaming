@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "dgram": "^1.0.1",
-    "express": "^4.21.1"
+    "express": "^4.21.1",
+    "streaming": "file:"
   }
 }
