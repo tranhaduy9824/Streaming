@@ -33,9 +33,15 @@ public class LiveStreamPanel extends JPanel {
         @Override
         public void actionPerformed(ActionEvent e) {
             String comment = commentField.getText();
-            // Logic to send comment
-            commentArea.append("You: " + comment + "\n");
-            commentField.setText("");
+            if (!comment.trim().isEmpty()) {
+                LivestreamClient.sendComment(comment);
+                commentArea.append("You: " + comment + "\n");
+                commentField.setText("");
+            }
         }
+    }
+
+    public void addComment(String comment) {
+        commentArea.append(comment + "\n");
     }
 }

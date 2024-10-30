@@ -4,14 +4,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 
 public class RoomListPanel extends JPanel {
     private JList<String> roomList;
 
-    public RoomListPanel(List<String> roomNames) {
+    public RoomListPanel() {
         setLayout(new BorderLayout());
-        roomList = new JList<>(roomNames.toArray(new String[0]));
+        roomList = new JList<>(LivestreamClient.getRoomListModel());
         add(new JScrollPane(roomList), BorderLayout.CENTER);
         JButton joinButton = new JButton("Join Room");
         add(joinButton, BorderLayout.SOUTH);
@@ -22,8 +21,10 @@ public class RoomListPanel extends JPanel {
         @Override
         public void actionPerformed(ActionEvent e) {
             String selectedRoom = roomList.getSelectedValue();
-            // Logic to join the selected room
-            System.out.println("Joined room: " + selectedRoom);
+            if (selectedRoom != null) {
+                String roomName = selectedRoom.split(" ")[0]; // Extract the room name
+                LivestreamClient.joinRoom(roomName);
+            }
         }
     }
 }

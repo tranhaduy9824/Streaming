@@ -9,10 +9,11 @@ public class LivestreamServer {
     public static void main(String[] args) {
         try {
             UserManager userManager = new UserManager();
-            RoomManager roomManager = new RoomManager();
+            UDPBroadcastServer udpBroadcastServer = new UDPBroadcastServer(userManager);
+            RoomManager roomManager = udpBroadcastServer.getRoomManager();
 
             // Start the UDP Broadcast server
-            new UDPBroadcastServer(userManager, roomManager).start();
+            udpBroadcastServer.start();
             // Start the room manager to handle rooms
             roomManager.start();
 

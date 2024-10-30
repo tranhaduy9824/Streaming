@@ -40,6 +40,7 @@ public class LoginPanel extends JPanel {
             String message = "LOGIN:" + username;
             if (LivestreamClient.sendBroadcastMessage(message)) {
                 System.out.println("Sent login request for username: " + username);
+                LivestreamClient.setUsername(username); // Set the username
                 LivestreamClient.showMainPanel();
             } else {
                 JOptionPane.showMessageDialog(LoginPanel.this, "Failed to send login request.", "Error", JOptionPane.ERROR_MESSAGE);
