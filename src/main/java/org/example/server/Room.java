@@ -18,6 +18,15 @@ public class Room {
         participants.add(participant);
     }
 
+    public boolean hasParticipant(String username) {
+        for (Participant participant : participants) {
+            if (participant.getUsername().equals(username)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public String getRoomName() {
         return roomName;
     }

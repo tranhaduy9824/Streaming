@@ -12,7 +12,9 @@ public class RoomManager {
 
     public synchronized void createRoom(String roomName, String owner) {
         if (roomName != null && !roomName.trim().isEmpty() && !rooms.containsKey(roomName)) {
-            rooms.put(roomName, new Room(roomName, owner));
+            Room room = new Room(roomName, owner);
+            room.addParticipant(new Participant(owner)); // Add the owner as a participant
+            rooms.put(roomName, room);
             System.out.println("Room created: " + roomName + " by " + owner);
         } else {
             System.out.println("Failed to create room: " + roomName);

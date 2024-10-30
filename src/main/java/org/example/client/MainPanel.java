@@ -4,6 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class MainPanel extends JPanel {
     private JList<String> roomList;
@@ -11,12 +13,29 @@ public class MainPanel extends JPanel {
     public MainPanel() {
         setLayout(new BorderLayout());
 
-        JButton refreshButton = new JButton("Refresh Room List");
-        refreshButton.addActionListener(new RefreshRoomListActionListener());
-        add(refreshButton, BorderLayout.NORTH);
+        JLabel usernameLabel = new JLabel("Logged in as: " + LivestreamClient.getUsername());
+        usernameLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        usernameLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        add(usernameLabel, BorderLayout.NORTH);
 
         roomList = new JList<>(LivestreamClient.getRoomListModel());
         add(new JScrollPane(roomList), BorderLayout.CENTER);
+
+        roomList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                System.out.println("Mouse clicked: " + e.getClickCount() + " times"); // Debug statement
+                if (e.getClickCount() == 2) {
+                    String selectedRoom = roomList.getSelectedValue();
+                    System.out.println("Double-click detected on room: " + selectedRoom); // Debug statement
+                    if (selectedRoom != null) {
+                        String roomName = selectedRoom.split(" ")[0]; // Extract the room name
+                        System.out.println("Joining room: " + roomName); // Debug statement
+                        LivestreamClient.joinRoom(roomName);
+                    }
+                }
+            }
+        });
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new GridLayout(1, 2));
@@ -32,21 +51,12 @@ public class MainPanel extends JPanel {
         add(buttonPanel, BorderLayout.SOUTH);
     }
 
-    private class RefreshRoomListActionListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            LivestreamClient.sendBroadcastMessage("LIST_ROOMS");
-            // No need to call receiveRoomList() here, as the client will update the room list asynchronously
-        }
-    }
-
     private class CreateRoomActionListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             String roomName = JOptionPane.showInputDialog(MainPanel.this, "Enter room name:");
-            String username = LivestreamClient.getUsername(); // Get the stored username
             if (roomName != null && !roomName.trim().isEmpty()) {
-                LivestreamClient.sendBroadcastMessage("CREATE_ROOM:" + username + ":" + roomName);
+                LivestreamClient.createRoom(roomName); // Use the new createRoom method
             }
         }
     }

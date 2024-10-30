@@ -52,16 +52,16 @@ public class UDPBroadcastServer extends Thread {
         String command = parts[0];
         String username = parts.length > 1 ? parts[1] : null;
         String roomName = parts.length > 2 ? parts[2] : null;
-    
+
         System.out.println("Received command: " + command);
         System.out.println("Username: " + username);
         System.out.println("Room Name: " + roomName);
-    
+
         // Ignore ROOM_LIST messages received by the server
         if ("ROOM_LIST".equals(command)) {
             return;
         }
-    
+
         switch (command) {
             case "REGISTER":
                 if (userManager.registerUser(username)) {
@@ -97,8 +97,14 @@ public class UDPBroadcastServer extends Thread {
                 break;
             case "JOIN_ROOM":
                 if (roomName != null && roomManager.getRooms().containsKey(roomName)) {
-                    roomManager.getRooms().get(roomName).addParticipant(new Participant(username));
-                    System.out.println("User " + username + " joined room: " + roomName);
+                    Room room = roomManager.getRooms().get(roomName);
+                    if (!room.hasParticipant(username)) {
+                        room.addParticipant(new Participant(username));
+                        System.out.println("User " + username + " joined room: " + roomName);
+                    } else {
+                        System.out.println("User " + username + " is already in room: " + roomName);
+                    }
+                    sendRoomList(address);
                 } else {
                     System.out.println("Room not found: " + roomName);
                 }
