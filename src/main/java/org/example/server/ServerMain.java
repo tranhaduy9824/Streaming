@@ -1,251 +1,137 @@
 package org.example.server;
 
-import java.io.*;
-import java.net.*;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.*;
+import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpExchange;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.MulticastSocket;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ServerMain {
-    private static final int TCP_PORT = 12345;
-    private static final int UDP_PORT = 12346;
-    private static Map<String, List<ClientHandler>> rooms = new HashMap<>();
-    private static Set<String> users = new HashSet<>();
+    private static final int UDP_PORT = 12346; // Cổng UDP
+    private static final String MULTICAST_GROUP = "224.0.0.1"; // Địa chỉ multicast
+    private static final int HTTP_PORT = 12347; // Cổng HTTP
+    private static final Set<String> users = new HashSet<>(); // Danh sách người dùng đã đăng ký
 
     public static void main(String[] args) {
-        try {
-            String hostAddress = InetAddress.getLocalHost().getHostAddress();
-            try (ServerSocket serverSocket = new ServerSocket(TCP_PORT, 50, InetAddress.getByName(hostAddress))) {
-                System.out.println("TCP server is running on " + hostAddress + ":" + TCP_PORT + "...");
-                new Thread(ServerMain::startUdpServer).start();
-
-                while (true) {
-                    Socket clientSocket = serverSocket.accept();
-                    new ClientHandler(clientSocket).start();
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        new Thread(ServerMain::startUdpServer).start(); // Khởi động server UDP
+        startHttpServer(); // Khởi động server HTTP
     }
 
     private static void startUdpServer() {
-        try (DatagramSocket udpSocket = new DatagramSocket(UDP_PORT)) {
-            System.out.println("UDP server is running on port " + UDP_PORT + "...");
-            byte[] buffer = new byte[1024];
+        try (MulticastSocket multicastSocket = new MulticastSocket(UDP_PORT)) {
+            InetAddress group = InetAddress.getByName(MULTICAST_GROUP);
+            multicastSocket.joinGroup(group);
+            System.out.println("UDP multicast server is running on port " + UDP_PORT + "...");
 
+            byte[] buffer = new byte[1024]; // Bộ đệm để nhận tin nhắn
             while (true) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                udpSocket.receive(packet);
+                multicastSocket.receive(packet); // Nhận tin nhắn UDP
                 String message = new String(packet.getData(), 0, packet.getLength());
                 System.out.println("Received UDP message: " + message);
+                handleMessage(message, packet.getAddress(), packet.getPort(), multicastSocket); // Xử lý tin nhắn
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Error in UDP server: " + e.getMessage());
         }
     }
 
-    private static class ClientHandler extends Thread {
-        private Socket socket;
-        private String username;
-        private String currentRoom;
-        private PrintWriter out;
-
-        public ClientHandler(Socket socket) {
-            this.socket = socket;
+    private static void startHttpServer() {
+        try {
+            HttpServer httpServer = HttpServer.create(new InetSocketAddress(HTTP_PORT), 0);
+            httpServer.createContext("/comment", new CommentHandler()); // Tạo context cho bình luận
+            httpServer.setExecutor(null); // Sử dụng executor mặc định
+            httpServer.start();
+            System.out.println("HTTP server is running on port " + HTTP_PORT + "...");
+        } catch (IOException e) {
+            System.err.println("Error in HTTP server: " + e.getMessage());
         }
+    }
 
+    static class CommentHandler implements HttpHandler {
         @Override
-        public void run() {
-            try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
-                this.out = new PrintWriter(socket.getOutputStream(), true);
-
-                String request;
-                while ((request = in.readLine()) != null) {
-                    System.out.println("Received: " + request);
-                    if (request.startsWith("GET") && request.contains("Upgrade: websocket")) {
-                        handleWebSocketHandshake(in);
-                        handleWebSocketCommunication(in);
-                        break;
-                    } else {
-                        handleRequest(request);
-                    }
-                }
-
-            } catch (IOException e) {
-                System.err.println("Error in ClientHandler: " + e.getMessage());
-                e.printStackTrace();
-            } finally {
-                cleanup();
+        public void handle(HttpExchange exchange) throws IOException {
+            // Xử lý phương thức OPTIONS
+            if ("OPTIONS".equals(exchange.getRequestMethod())) {
+                // Thiết lập header CORS
+                exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+                exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "POST, OPTIONS");
+                exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
+                exchange.sendResponseHeaders(200, -1); // Không có nội dung trả về
+                return;
             }
-        }
-
-        private void handleWebSocketHandshake(BufferedReader in) throws IOException {
-            String line;
-            String webSocketKey = null;
-
-            while (!(line = in.readLine()).isEmpty()) {
-                if (line.startsWith("Sec-WebSocket-Key:")) {
-                    webSocketKey = line.split(": ")[1].trim();
-                }
-            }
-
-            if (webSocketKey != null) {
-                try {
-                    String acceptKey = createAcceptKey(webSocketKey);
-                    out.println("HTTP/1.1 101 Switching Protocols");
-                    out.println("Upgrade: websocket");
-                    out.println("Connection: Upgrade");
-                    out.println("Sec-WebSocket-Accept: " + acceptKey);
-                    out.println();
-                    out.flush();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-        private void handleWebSocketCommunication(BufferedReader in) throws IOException {
-            try {
-                while (true) {
-                    String message = readWebSocketMessage(socket.getInputStream());
-                    if (message != null) {
-                        System.out.println("WebSocket message: " + message);
-                        out.println("Server received: " + message); // Echo back to client
-                        out.flush();
-                    } else {
-                        break;
-                    }
-                }
-            } catch (IOException e) {
-                System.out.println("Error in WebSocket communication: " + e.getMessage());
-            } finally {
-                cleanup(); // Đảm bảo kết nối được đóng khi gặp lỗi
-            }
-        }        
-
-        private String readWebSocketMessage(InputStream input) throws IOException {
-            DataInputStream dataInputStream = new DataInputStream(input);
-            byte[] header = new byte[2];
-            dataInputStream.readFully(header);
-
-            boolean isMasked = (header[1] & 0x80) != 0;
-            int payloadLength = header[1] & 0x7F;
-
-            if (payloadLength == 126) {
-                payloadLength = dataInputStream.readUnsignedShort();
-            } else if (payloadLength == 127) {
-                payloadLength = (int) dataInputStream.readLong();
-            }
-
-            byte[] maskingKey = new byte[4];
-            if (isMasked) {
-                dataInputStream.readFully(maskingKey);
-            }
-
-            byte[] payloadData = new byte[payloadLength];
-            dataInputStream.readFully(payloadData);
-
-            if (isMasked) {
-                for (int i = 0; i < payloadLength; i++) {
-                    payloadData[i] ^= maskingKey[i % 4];
-                }
-            }
-
-            return new String(payloadData, StandardCharsets.UTF_8);
-        }
-
-        private String createAcceptKey(String key) throws Exception {
-            return Base64.getEncoder().encodeToString(
-                    MessageDigest.getInstance("SHA-1")
-                            .digest((key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").getBytes(StandardCharsets.UTF_8)));
-        }
-
-        private void cleanup() {
-            if (currentRoom != null && rooms.containsKey(currentRoom)) {
-                rooms.get(currentRoom).remove(this);
-            }
-            try {
-                socket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        private void handleRequest(String request) {
-            String[] parts = request.split(":", 2);
-            String command = parts[0].trim();
-
-            switch (command) {
-                case "REGISTER":
-                    handleRegister(parts[1].trim());
-                    break;
-                case "LOGIN":
-                    handleLogin(parts[1].trim());
-                    break;
-                case "CREATE_ROOM":
-                    handleCreateRoom(parts[1].trim());
-                    break;
-                case "JOIN_ROOM":
-                    handleJoinRoom(parts[1].trim());
-                    break;
-                case "COMMENT":
-                    handleComment(parts[1].trim());
-                    break;
-                default:
-                    out.println("UNKNOWN_COMMAND");
-                    break;
-            }
-        }
-
-        private void handleRegister(String username) {
-            if (users.contains(username)) {
-                out.println("REGISTER_FAILED: Username already exists.");
+    
+            // Xử lý phương thức POST
+            if ("POST".equals(exchange.getRequestMethod())) {
+                String requestBody = new String(exchange.getRequestBody().readAllBytes());
+                System.out.println("Received HTTP comment: " + requestBody);
+    
+                // Xử lý bình luận
+                String response = "Comment received: " + requestBody;
+    
+                // Gửi phản hồi
+                sendResponse(exchange, 200, response);
             } else {
-                users.add(username);
-                this.username = username;
-                out.println("REGISTER_SUCCESS");
+                String response = "Only POST requests are supported.";
+                sendResponse(exchange, 405, response);
             }
         }
-
-        private void handleLogin(String username) {
-            if (users.contains(username)) {
-                this.username = username;
-                out.println("LOGIN_SUCCESS");
-            } else {
-                out.println("LOGIN_FAILED: Username does not exist.");
+    
+        private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
+            exchange.sendResponseHeaders(statusCode, response.length());
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(response.getBytes());
             }
         }
+    }    
 
-        private void handleCreateRoom(String roomName) {
-            rooms.putIfAbsent(roomName, new ArrayList<>());
-            rooms.get(roomName).add(this);
-            currentRoom = roomName;
-            out.println("ROOM_CREATED: " + roomName);
-        }
+    private static void handleMessage(String message, InetAddress address, int port, MulticastSocket multicastSocket) {
+        String[] parts = message.split(":", 2);
+        String command = parts[0].trim();
 
-        private void handleJoinRoom(String roomName) {
-            List<ClientHandler> room = rooms.get(roomName);
-            if (room != null) {
-                room.add(this);
-                currentRoom = roomName;
-                out.println("JOINED_ROOM: " + roomName);
-            } else {
-                out.println("JOIN_FAILED: Room does not exist.");
-            }
+        switch (command) {
+            case "REGISTER":
+                handleRegister(parts.length > 1 ? parts[1].trim() : "", address, port, multicastSocket);
+                break;
+            case "COMMENT":
+                handleComment(parts.length > 1 ? parts[1].trim() : "", multicastSocket);
+                break;
+            default:
+                sendResponse("UNKNOWN_COMMAND", multicastSocket);
+                break;
         }
+    }
 
-        private void handleComment(String message) {
-            if (currentRoom != null && rooms.containsKey(currentRoom)) {
-                for (ClientHandler handler : rooms.get(currentRoom)) {
-                    try {
-                        PrintWriter writer = new PrintWriter(handler.socket.getOutputStream(), true);
-                        writer.println("COMMENT_FROM_" + username + ": " + message);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
+    private static void sendResponse(String message, MulticastSocket multicastSocket) {
+        try {
+            byte[] buffer = message.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName(MULTICAST_GROUP), UDP_PORT);
+            multicastSocket.send(packet); // Gửi phản hồi qua multicast
+        } catch (IOException e) {
+            System.err.println("Error sending response: " + e.getMessage());
         }
+    }
+
+    private static void handleRegister(String username, InetAddress address, int port, MulticastSocket multicastSocket) {
+        if (users.contains(username)) {
+            sendResponse("REGISTER_FAILED: Username already exists.", multicastSocket);
+        } else {
+            users.add(username);
+            sendResponse("REGISTER_SUCCESS", multicastSocket);
+            System.out.println("User registered: " + username);
+        }
+    }
+
+    private static void handleComment(String message, MulticastSocket multicastSocket) {
+        String responseMessage = "COMMENT_FROM: " + message;
+        sendResponse(responseMessage, multicastSocket);
+        System.out.println("Forwarded comment: " + responseMessage);
     }
 }
