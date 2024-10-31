@@ -1,6 +1,5 @@
 package org.example.server;
 
-import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -13,7 +12,7 @@ public class UDPBroadcastServer extends Thread {
 
     public UDPBroadcastServer(UserManager userManager) {
         this.userManager = userManager;
-        this.roomManager = new RoomManager(this);
+        this.roomManager = new RoomManager();
     }
 
     @Override
@@ -55,10 +54,6 @@ public class UDPBroadcastServer extends Thread {
         String roomName = parts.length > 2 ? parts[2] : null;
         String senderAddress = parts.length > 3 ? parts[3] : null;
 
-        System.out.println("Received command: " + command);
-        System.out.println("Username: " + username);
-        System.out.println("Room Name: " + roomName);
-
         if ("ROOM_LIST".equals(command)) {
             return;
         }
@@ -91,7 +86,7 @@ public class UDPBroadcastServer extends Thread {
                 break;
             case "CLOSE_ROOM":
                 if (roomManager.getRooms().containsKey(roomName)) {
-                    broadcastRoomClosure(roomName);
+                    multicastRoomClosure(roomName);
                     roomManager.closeRoom(roomName);
                     System.out.println("Room closed: " + roomName);
                     sendRoomList(address);
@@ -176,7 +171,7 @@ public class UDPBroadcastServer extends Thread {
         }
     }
 
-    private void broadcastRoomClosure(String roomName) {
+    private void multicastRoomClosure(String roomName) {
         Room room = roomManager.getRooms().get(roomName);
         if (room != null) {
             System.out.println("Broadcasting room closure for room: " + roomName);

@@ -5,9 +5,11 @@ import java.util.Map;
 
 public class RoomManager {
     private Map<String, Room> rooms;
+    private VideoStreamManager videoStreamManager;
 
-    public RoomManager(UDPBroadcastServer udpBroadcastServer) {
+    public RoomManager() {
         this.rooms = new HashMap<>();
+        this.videoStreamManager = new VideoStreamManager();
     }
 
     public synchronized void createRoom(String roomName, String owner) {
@@ -15,6 +17,7 @@ public class RoomManager {
             Room room = new Room(roomName, owner);
             room.addParticipant(new Participant(owner));
             rooms.put(roomName, room);
+            videoStreamManager.startStream(roomName, new VideoStreamTask(roomName));
             System.out.println("Room created: " + roomName + " by " + owner);
         } else {
             System.out.println("Failed to create room: " + roomName);
@@ -24,6 +27,7 @@ public class RoomManager {
     public synchronized void closeRoom(String roomName) {
         if (rooms.containsKey(roomName)) {
             rooms.remove(roomName);
+            videoStreamManager.stopStream(roomName);
             System.out.println("Room closed: " + roomName);
         }
     }

@@ -18,30 +18,18 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Base64;
 
-public class WebRTCClient extends JFrame {
-    private WebSocketClient client;
-    private FrameGrabber grabber;
+public abstract class WebRTCClient {
+    protected WebSocketClient client;
+    protected FrameGrabber grabber;
+    protected Java2DFrameConverter converter;
+    protected BufferedImage currentImage;
 
     public WebRTCClient() {
-        setTitle("Livestream Client");
-        setSize(640, 480);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
-
         connectWebSocket();
-
-        try {
-            grabber = new VideoInputFrameGrabber(0);
-            grabber.start();
-            new Thread(this::startStreaming).start();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        setVisible(true);
+        startVideoStream();
     }
 
-    private void connectWebSocket() {
+    protected void connectWebSocket() {
         try {
             client = new WebSocketClient(new URI("ws://" + Constants.SERVER_ADDRESS + ":" + ServerConfig.SIGNALING_PORT)) {
                 @Override
@@ -51,7 +39,7 @@ public class WebRTCClient extends JFrame {
 
                 @Override
                 public void onMessage(String message) {
-                    System.out.println("Received: " + message);
+                    handleWebSocketMessage(message);
                 }
 
                 @Override
@@ -70,30 +58,36 @@ public class WebRTCClient extends JFrame {
         }
     }
 
-    private void startStreaming() {
-        Java2DFrameConverter converter = new Java2DFrameConverter();
-        while (true) {
+    protected void startVideoStream() {
+        new Thread(() -> {
             try {
-                Frame frame = grabber.grab();
-                if (frame != null) {
-                    BufferedImage image = converter.convert(frame);
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    ImageIO.write(image, "jpg", baos);
-                    byte[] imageBytes = baos.toByteArray();
-                    String encodedImage = Base64.getEncoder().encodeToString(imageBytes);
-                    if (client != null && client.isOpen()) {
-                        client.send(encodedImage);
-                    } else {
-                        System.out.println("WebSocket connection is not open.");
+                grabber = new VideoInputFrameGrabber(1);
+                grabber.start();
+                converter = new Java2DFrameConverter();
+                while (true) {
+                    try {
+                        Frame frame = grabber.grab();
+                        if (frame != null) {
+                            currentImage = converter.convert(frame);
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            ImageIO.write(currentImage, "jpg", baos);
+                            byte[] imageBytes = baos.toByteArray();
+                            String encodedImage = Base64.getEncoder().encodeToString(imageBytes);
+                            if (client != null && client.isOpen()) {
+                                client.send(encodedImage);
+                            } else {
+                                System.out.println("WebSocket connection is not open.");
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
-            } catch (IOException e) {
+            } catch (FrameGrabber.Exception e) {
                 e.printStackTrace();
             }
-        }
+        }).start();
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(WebRTCClient::new);
-    }
+    protected abstract void handleWebSocketMessage(String message);
 }

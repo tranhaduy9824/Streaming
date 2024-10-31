@@ -31,7 +31,6 @@ public class WebRTCSignalingServer extends WebSocketServer {
 
     @Override
     public void onMessage(WebSocket conn, String message) {
-        System.out.println("Received message: " + message);
         for (WebSocket client : clients.keySet()) {
             if (client != conn) {
                 client.send(message);
