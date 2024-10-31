@@ -7,6 +7,7 @@ import java.util.Properties;
 public class ServerConfig {
     public static final String BROADCAST_ADDRESS;
     public static final int BROADCAST_PORT;
+    public static final int SIGNALING_PORT;
 
     static {
         Properties properties = new Properties();
@@ -17,5 +18,6 @@ public class ServerConfig {
         }
         BROADCAST_ADDRESS = properties.getProperty("udp.server.address", "230.0.0.1");
         BROADCAST_PORT = Integer.parseInt(properties.getProperty("udp.server.port", "9877"));
+        SIGNALING_PORT = Integer.parseInt(properties.getProperty("websocket.server.port", "8080"));
     }
 }

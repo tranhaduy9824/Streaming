@@ -13,7 +13,7 @@ public class RoomManager {
     public synchronized void createRoom(String roomName, String owner) {
         if (roomName != null && !roomName.trim().isEmpty() && !rooms.containsKey(roomName)) {
             Room room = new Room(roomName, owner);
-            room.addParticipant(new Participant(owner)); // Add the owner as a participant
+            room.addParticipant(new Participant(owner));
             rooms.put(roomName, room);
             System.out.println("Room created: " + roomName + " by " + owner);
         } else {
@@ -30,9 +30,5 @@ public class RoomManager {
 
     public Map<String, Room> getRooms() {
         return rooms;
-    }
-
-    public void start() {
-        // Logic to manage rooms (create, delete, etc.)
     }
 }
