@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 public class RoomParticipantPanel extends JPanel {
     private JTextArea commentArea;
     private JTextField commentField;
+    private WebRTCClient webRTCClient;
 
     public RoomParticipantPanel() {
         setLayout(new BorderLayout());
@@ -27,6 +28,14 @@ public class RoomParticipantPanel extends JPanel {
         sendButton.addActionListener(new SendCommentActionListener());
         commentPanel.add(sendButton, BorderLayout.EAST);
         add(commentPanel, BorderLayout.SOUTH);
+
+        JButton leaveRoomButton = new JButton("Leave Room");
+        leaveRoomButton.addActionListener(new LeaveRoomActionListener());
+        add(leaveRoomButton, BorderLayout.NORTH);
+
+        // Start WebRTC connection
+        webRTCClient = new WebRTCClient();
+        webRTCClient.start();
     }
 
     private class SendCommentActionListener implements ActionListener {
@@ -38,6 +47,13 @@ public class RoomParticipantPanel extends JPanel {
                 commentArea.append("You: " + comment + "\n");
                 commentField.setText("");
             }
+        }
+    }
+
+    private class LeaveRoomActionListener implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            LivestreamClient.leaveRoom();
         }
     }
 

@@ -165,6 +165,14 @@ public class LivestreamClient {
         checkRoomOwnerAfterUpdate = true; // Set flag to re-check room owner status after room list update
     }
 
+    public static void leaveRoom() {
+        if (currentRoom != null) {
+            sendBroadcastMessage("LEAVE_ROOM:" + username + ":" + currentRoom);
+            currentRoom = null;
+            showMainPanel();
+        }
+    }
+
     public static void createRoom(String roomName) {
         String message = "CREATE_ROOM:" + username + ":" + roomName;
         if (sendBroadcastMessage(message)) {

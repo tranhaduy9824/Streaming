@@ -18,6 +18,10 @@ public class Room {
         participants.add(participant);
     }
 
+    public void removeParticipant(String username) {
+        participants.removeIf(participant -> participant.getUsername().equals(username));
+    }
+
     public boolean hasParticipant(String username) {
         for (Participant participant : participants) {
             if (participant.getUsername().equals(username)) {

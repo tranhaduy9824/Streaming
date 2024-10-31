@@ -89,8 +89,30 @@ public class UDPBroadcastServer extends Thread {
                 }
                 break;
             case "CLOSE_ROOM":
-                roomManager.closeRoom(roomName);
-                sendRoomList(address);
+                if (roomManager.getRooms().containsKey(roomName)) {
+                    Room room = roomManager.getRooms().get(roomName);
+                    if (room.getOwner().equals(username)) {
+                        roomManager.closeRoom(roomName);
+                        sendRoomList(address);
+                    } else {
+                        System.out.println("Only the owner can close the room: " + roomName);
+                    }
+                } else {
+                    System.out.println("Room not found: " + roomName);
+                }
+                break;
+            case "LEAVE_ROOM":
+                if (roomName != null && roomManager.getRooms().containsKey(roomName)) {
+                    Room room = roomManager.getRooms().get(roomName);
+                    room.removeParticipant(username);
+                    System.out.println("User " + username + " left room: " + roomName);
+                    if (room.getParticipantCount() == 0) {
+                        roomManager.closeRoom(roomName);
+                    }
+                    sendRoomList(address);
+                } else {
+                    System.out.println("Room not found: " + roomName);
+                }
                 break;
             case "LIST_ROOMS":
                 sendRoomList(address);
