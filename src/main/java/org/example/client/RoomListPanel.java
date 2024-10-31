@@ -16,13 +16,13 @@ public class RoomListPanel extends JPanel {
         roomList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                System.out.println("Mouse clicked: " + e.getClickCount() + " times"); // Debug statement
+                System.out.println("Mouse clicked: " + e.getClickCount() + " times");
                 if (e.getClickCount() == 2) {
                     String selectedRoom = roomList.getSelectedValue();
-                    System.out.println("Double-click detected on room: " + selectedRoom); // Debug statement
+                    System.out.println("Double-click detected on room: " + selectedRoom);
                     if (selectedRoom != null) {
-                        String roomName = selectedRoom.split(" ")[0]; // Extract the room name
-                        System.out.println("Joining room: " + roomName); // Debug statement
+                        String roomName = selectedRoom.split(" ")[0]; 
+                        System.out.println("Joining room: " + roomName);
                         LivestreamClient.joinRoom(roomName);
                     }
                 }

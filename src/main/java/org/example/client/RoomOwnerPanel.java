@@ -1,14 +1,15 @@
 package org.example.client;
 
 import javax.swing.*;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class RoomOwnerPanel extends JPanel {
-    private JTextArea commentArea;
+    private JTextPane commentPane;
     private JTextField commentField;
-    private WebRTCClient webRTCClient;
+    private StyledDocument doc;
 
     public RoomOwnerPanel() {
         setLayout(new BorderLayout());
@@ -17,9 +18,10 @@ public class RoomOwnerPanel extends JPanel {
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
         add(titleLabel, BorderLayout.NORTH);
 
-        commentArea = new JTextArea();
-        commentArea.setEditable(false);
-        add(new JScrollPane(commentArea), BorderLayout.CENTER);
+        commentPane = new JTextPane();
+        commentPane.setEditable(false);
+        doc = commentPane.getStyledDocument();
+        add(new JScrollPane(commentPane), BorderLayout.CENTER);
 
         JPanel commentPanel = new JPanel(new BorderLayout());
         commentField = new JTextField();
@@ -32,10 +34,6 @@ public class RoomOwnerPanel extends JPanel {
         JButton closeRoomButton = new JButton("Close Room");
         closeRoomButton.addActionListener(new CloseRoomActionListener());
         add(closeRoomButton, BorderLayout.NORTH);
-
-        // Start WebRTC connection
-        webRTCClient = new WebRTCClient();
-        webRTCClient.start();
     }
 
     private class SendCommentActionListener implements ActionListener {
@@ -44,7 +42,7 @@ public class RoomOwnerPanel extends JPanel {
             String comment = commentField.getText();
             if (!comment.trim().isEmpty()) {
                 LivestreamClient.sendComment(comment);
-                commentArea.append("You: " + comment + "\n");
+                addComment("You: " + comment, true);
                 commentField.setText("");
             }
         }
@@ -61,7 +59,18 @@ public class RoomOwnerPanel extends JPanel {
         }
     }
 
-    public void addComment(String comment) {
-        commentArea.append(comment + "\n");
+    public void addComment(String comment, boolean isOwner) {
+        try {
+            Style style = doc.addStyle("Style", null);
+            if (isOwner) {
+                StyleConstants.setForeground(style, Color.RED);
+                doc.insertString(doc.getLength(), "Owner: " + comment + "\n", style);
+            } else {
+                StyleConstants.setForeground(style, Color.BLACK);
+                doc.insertString(doc.getLength(), comment + "\n", style);
+            }
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
     }
 }

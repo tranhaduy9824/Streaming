@@ -24,13 +24,13 @@ public class MainPanel extends JPanel {
         roomList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                System.out.println("Mouse clicked: " + e.getClickCount() + " times"); // Debug statement
+                System.out.println("Mouse clicked: " + e.getClickCount() + " times");
                 if (e.getClickCount() == 2) {
                     String selectedRoom = roomList.getSelectedValue();
-                    System.out.println("Double-click detected on room: " + selectedRoom); // Debug statement
+                    System.out.println("Double-click detected on room: " + selectedRoom);
                     if (selectedRoom != null) {
-                        String roomName = selectedRoom.split(" ")[0]; // Extract the room name
-                        System.out.println("Joining room: " + roomName); // Debug statement
+                        String roomName = selectedRoom.split(" ")[0];
+                        System.out.println("Joining room: " + roomName);
                         LivestreamClient.joinRoom(roomName);
                     }
                 }
@@ -44,10 +44,6 @@ public class MainPanel extends JPanel {
         createRoomButton.addActionListener(new CreateRoomActionListener());
         buttonPanel.add(createRoomButton);
 
-        JButton closeRoomButton = new JButton("Close Room");
-        closeRoomButton.addActionListener(new CloseRoomActionListener());
-        buttonPanel.add(closeRoomButton);
-
         add(buttonPanel, BorderLayout.SOUTH);
     }
 
@@ -56,17 +52,7 @@ public class MainPanel extends JPanel {
         public void actionPerformed(ActionEvent e) {
             String roomName = JOptionPane.showInputDialog(MainPanel.this, "Enter room name:");
             if (roomName != null && !roomName.trim().isEmpty()) {
-                LivestreamClient.createRoom(roomName); // Use the new createRoom method
-            }
-        }
-    }
-
-    private class CloseRoomActionListener implements ActionListener {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-            String roomName = roomList.getSelectedValue();
-            if (roomName != null) {
-                LivestreamClient.sendBroadcastMessage("CLOSE_ROOM:" + roomName);
+                LivestreamClient.createRoom(roomName);
             }
         }
     }

@@ -1,194 +1,91 @@
 package org.example.client;
 
-import dev.onvoid.webrtc.*;
-import dev.onvoid.webrtc.media.video.VideoTrack;
+import org.bytedeco.javacv.Frame;
+import org.bytedeco.javacv.FrameGrabber;
+import org.bytedeco.javacv.Java2DFrameConverter;
+import org.bytedeco.javacv.VideoInputFrameGrabber;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 
-public class WebRTCClient {
-    private PeerConnectionFactory peerConnectionFactory;
-    private RTCPeerConnection peerConnection;
-    private WebSocketClient socket;
-    private VideoTrack localVideoTrack;
-    private VideoTrack remoteVideoTrack;
+public class WebRTCClient extends JFrame {
+    private WebSocketClient client;
+    private FrameGrabber grabber;
 
     public WebRTCClient() {
-        // Initialize WebRTC
-        PeerConnectionFactory.InitializationOptions initializationOptions =
-                PeerConnectionFactory.InitializationOptions.builder()
-                        .createInitializationOptions();
-        PeerConnectionFactory.initialize(initializationOptions);
+        setTitle("Livestream Client");
+        setSize(640, 480);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
 
-        peerConnectionFactory = PeerConnectionFactory.builder().createPeerConnectionFactory();
+        connectWebSocket();
 
-        // Initialize WebSocket
         try {
-            socket = new WebSocketClient(new URI("ws://" + ClientConfig.SIGNALING_SERVER_ADDRESS + ":" + ClientConfig.SIGNALING_SERVER_PORT)) {
+            grabber = new VideoInputFrameGrabber(0);
+            grabber.start();
+            new Thread(this::startStreaming).start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        setVisible(true);
+    }
+
+    private void connectWebSocket() {
+        try {
+            client = new WebSocketClient(new URI("ws://192.168.1.5:9877")) {
                 @Override
                 public void onOpen(ServerHandshake handshakedata) {
-                    System.out.println("WebSocket connection opened");
+                    System.out.println("Connected to server");
                 }
 
                 @Override
                 public void onMessage(String message) {
-                    handleMessage(message);
+                    System.out.println("Received: " + message);
                 }
 
                 @Override
                 public void onClose(int code, String reason, boolean remote) {
-                    System.out.println("WebSocket connection closed: " + reason);
+                    System.out.println("Connection closed");
                 }
 
                 @Override
                 public void onError(Exception ex) {
-                    System.err.println("WebSocket error: " + ex.getMessage());
+                    ex.printStackTrace();
                 }
             };
-            socket.connect();
+            client.connect();
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
+    }
 
-        // Initialize PeerConnection
-        RTCConfiguration rtcConfig = new RTCConfiguration();
-        rtcConfig.iceServers = new ArrayList<>();
-        peerConnection = peerConnectionFactory.createPeerConnection(rtcConfig, new PeerConnectionObserver() {
-            @Override
-            public void onIceCandidate(RTCIceCandidate candidate) {
-                sendIceCandidate(candidate);
-            }
-
-            @Override
-            public void onAddStream(MediaStream stream) {
-                if (!stream.getVideoTracks().isEmpty()) {
-                    remoteVideoTrack = stream.getVideoTracks().get(0);
+    private void startStreaming() {
+        Java2DFrameConverter converter = new Java2DFrameConverter();
+        while (true) {
+            try {
+                Frame frame = grabber.grab();
+                if (frame != null) {
+                    BufferedImage image = converter.convert(frame);
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    ImageIO.write(image, "jpg", baos);
+                    byte[] imageBytes = baos.toByteArray();
+                    client.send(imageBytes);
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-
-            @Override
-            public void onRemoveStream(MediaStream stream) {
-                remoteVideoTrack = null;
-            }
-        });
+        }
     }
 
-    private void handleMessage(String message) {
-        // Handle incoming signaling messages (offer, answer, ICE candidates)
-        // This method needs to be implemented based on your signaling protocol
-        // Example:
-        // if (message.contains("offer")) {
-        //     handleOffer(message);
-        // } else if (message.contains("answer")) {
-        //     handleAnswer(message);
-        // } else if (message.contains("candidate")) {
-        //     handleIceCandidate(message);
-        // }
-    }
-
-    private void sendIceCandidate(RTCIceCandidate candidate) {
-        // Send ICE candidate to the signaling server
-        // This method needs to be implemented based on your signaling protocol
-        // Example:
-        // socket.send("candidate:" + candidate.toString());
-    }
-
-    public void createOffer() {
-        peerConnection.createOffer(new CreateSessionDescriptionObserver() {
-            @Override
-            public void onSuccess(RTCSessionDescription description) {
-                peerConnection.setLocalDescription(new SetSessionDescriptionObserver() {
-                    @Override
-                    public void onSuccess() {
-                        // Send offer to the signaling server
-                        // This method needs to be implemented based on your signaling protocol
-                        // Example:
-                        // socket.send("offer:" + description.toString());
-                    }
-
-                    @Override
-                    public void onFailure(String error) {
-                        System.err.println("Failed to set local description: " + error);
-                    }
-                }, description);
-            }
-
-            @Override
-            public void onFailure(String error) {
-                System.err.println("Failed to create offer: " + error);
-            }
-        });
-    }
-
-    public void createAnswer() {
-        peerConnection.createAnswer(new CreateSessionDescriptionObserver() {
-            @Override
-            public void onSuccess(RTCSessionDescription description) {
-                peerConnection.setLocalDescription(new SetSessionDescriptionObserver() {
-                    @Override
-                    public void onSuccess() {
-                        // Send answer to the signaling server
-                        // This method needs to be implemented based on your signaling protocol
-                        // Example:
-                        // socket.send("answer:" + description.toString());
-                    }
-
-                    @Override
-                    public void onFailure(String error) {
-                        System.err.println("Failed to set local description: " + error);
-                    }
-                }, description);
-            }
-
-            @Override
-            public void onFailure(String error) {
-                System.err.println("Failed to create answer: " + error);
-            }
-        });
-    }
-
-    public void addIceCandidate(RTCIceCandidate candidate) {
-        peerConnection.addIceCandidate(candidate);
-    }
-
-    // Example methods to handle offers and answers
-    private void handleOffer(String sdp) {
-        RTCSessionDescription offer = new RTCSessionDescription(RTCSdpType.OFFER, sdp);
-        peerConnection.setRemoteDescription(new SetSessionDescriptionObserver() {
-            @Override
-            public void onSuccess() {
-                createAnswer();
-            }
-
-            @Override
-            public void onFailure(String error) {
-                System.err.println("Failed to set remote description: " + error);
-            }
-        }, offer);
-    }
-
-    private void handleAnswer(String sdp) {
-        RTCSessionDescription answer = new RTCSessionDescription(RTCSdpType.ANSWER, sdp);
-        peerConnection.setRemoteDescription(new SetSessionDescriptionObserver() {
-            @Override
-            public void onSuccess() {
-                // Successfully set remote description
-            }
-
-            @Override
-            public void onFailure(String error) {
-                System.err.println("Failed to set remote description: " + error);
-            }
-        }, answer);
-    }
-
-    private void handleIceCandidate(String candidate) {
-        // Parse the candidate string and add it to the peer connection
-        // Example:
-        // RTCIceCandidate iceCandidate = new RTCIceCandidate(candidate);
-        // addIceCandidate(iceCandidate);
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(WebRTCClient::new);
     }
 }

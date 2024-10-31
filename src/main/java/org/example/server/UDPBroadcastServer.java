@@ -1,5 +1,6 @@
 package org.example.server;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -12,7 +13,7 @@ public class UDPBroadcastServer extends Thread {
 
     public UDPBroadcastServer(UserManager userManager) {
         this.userManager = userManager;
-        this.roomManager = new RoomManager(this); // Pass the server instance to RoomManager
+        this.roomManager = new RoomManager(this);
     }
 
     @Override
@@ -52,12 +53,12 @@ public class UDPBroadcastServer extends Thread {
         String command = parts[0];
         String username = parts.length > 1 ? parts[1] : null;
         String roomName = parts.length > 2 ? parts[2] : null;
+        String senderAddress = parts.length > 3 ? parts[3] : null;
 
         System.out.println("Received command: " + command);
         System.out.println("Username: " + username);
         System.out.println("Room Name: " + roomName);
 
-        // Ignore ROOM_LIST messages received by the server
         if ("ROOM_LIST".equals(command)) {
             return;
         }
@@ -90,13 +91,10 @@ public class UDPBroadcastServer extends Thread {
                 break;
             case "CLOSE_ROOM":
                 if (roomManager.getRooms().containsKey(roomName)) {
-                    Room room = roomManager.getRooms().get(roomName);
-                    if (room.getOwner().equals(username)) {
-                        roomManager.closeRoom(roomName);
-                        sendRoomList(address);
-                    } else {
-                        System.out.println("Only the owner can close the room: " + roomName);
-                    }
+                    broadcastRoomClosure(roomName);
+                    roomManager.closeRoom(roomName);
+                    System.out.println("Room closed: " + roomName);
+                    sendRoomList(address);
                 } else {
                     System.out.println("Room not found: " + roomName);
                 }
@@ -132,9 +130,9 @@ public class UDPBroadcastServer extends Thread {
                 }
                 break;
             case "COMMENT":
-                String comment = parts.length > 2 ? parts[2] : null;
+                String comment = parts.length > 3 ? parts[3] : null;
                 if (comment != null) {
-                    broadcastComment(username, comment);
+                    broadcastComment(roomName, username, comment);
                 }
                 break;
             default:
@@ -160,15 +158,42 @@ public class UDPBroadcastServer extends Thread {
         }
     }
 
-    private void broadcastComment(String username, String comment) {
-        try (DatagramSocket socket = new DatagramSocket()) {
-            InetAddress group = InetAddress.getByName(ServerConfig.BROADCAST_ADDRESS);
-            String message = "COMMENT:" + username + ":" + comment;
-            byte[] buffer = message.getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, ServerConfig.BROADCAST_PORT);
-            socket.send(packet);
-        } catch (Exception e) {
-            e.printStackTrace();
+    private void broadcastComment(String roomName, String username, String comment) {
+        Room room = roomManager.getRooms().get(roomName);
+        if (room != null) {
+            for (Participant participant : room.getParticipants()) {
+                try (DatagramSocket socket = new DatagramSocket()) {
+                    InetAddress group = InetAddress.getByName(ServerConfig.BROADCAST_ADDRESS);
+                    String message = "COMMENT:" + username + ":" + comment;
+                    byte[] buffer = message.getBytes();
+                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group,
+                            ServerConfig.BROADCAST_PORT);
+                    socket.send(packet);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private void broadcastRoomClosure(String roomName) {
+        Room room = roomManager.getRooms().get(roomName);
+        if (room != null) {
+            System.out.println("Broadcasting room closure for room: " + roomName);
+            for (Participant participant : room.getParticipants()) {
+                try (DatagramSocket socket = new DatagramSocket()) {
+                    InetAddress group = InetAddress.getByName(ServerConfig.BROADCAST_ADDRESS);
+                    String message = "ROOM_CLOSED:" + roomName;
+                    byte[] buffer = message.getBytes();
+                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group,
+                            ServerConfig.BROADCAST_PORT);
+                    socket.send(packet);
+                    System.out.println(
+                            "Sent room closed message to " + participant.getUsername() + " for room: " + roomName);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 

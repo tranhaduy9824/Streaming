@@ -35,13 +35,18 @@ public class LiveStreamPanel extends JPanel {
             String comment = commentField.getText();
             if (!comment.trim().isEmpty()) {
                 LivestreamClient.sendComment(comment);
-                commentArea.append("You: " + comment + "\n");
                 commentField.setText("");
             }
         }
     }
 
-    public void addComment(String comment) {
-        commentArea.append(comment + "\n");
+    public void addComment(String comment, boolean isOwner) {
+        if (isOwner) {
+            commentArea.append("Owner: " + comment + "\n");
+            commentArea.setForeground(Color.RED);
+        } else {
+            commentArea.append(comment + "\n");
+            commentArea.setForeground(Color.BLACK);
+        }
     }
 }

@@ -22,12 +22,12 @@ public class CreateRoomPanel extends JPanel {
         @Override
         public void actionPerformed(ActionEvent e) {
             String roomName = roomNameField.getText();
-            String username = LivestreamClient.getUsername(); // Get the stored username
-            System.out.println("Room name entered: " + roomName); // Add this line
+            String username = LivestreamClient.getUsername(); 
+            System.out.println("Room name entered: " + roomName); 
     
             if (roomName != null && !roomName.trim().isEmpty()) {
                 String message = "CREATE_ROOM:" + username + ":" + roomName;
-                System.out.println("Message to be sent: " + message); // Add this line
+                System.out.println("Message to be sent: " + message); 
                 if (LivestreamClient.sendBroadcastMessage(message)) {
                     System.out.println("Create room request sent successfully for room: " + roomName);
                 } else {

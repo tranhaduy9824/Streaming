@@ -9,6 +9,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.UnknownHostException;
 
 public class LivestreamClient {
     private static JFrame frame;
@@ -87,11 +88,11 @@ public class LivestreamClient {
 
     public static boolean sendBroadcastMessage(String message) {
         try (DatagramSocket socket = new DatagramSocket()) {
-            InetAddress address = InetAddress.getByName(ClientConfig.BROADCAST_ADDRESS);
-            byte[] buffer = message.getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, address, ClientConfig.BROADCAST_PORT);
+            InetAddress group = InetAddress.getByName(ClientConfig.BROADCAST_ADDRESS);
+            String fullMessage = message + ":" + InetAddress.getLocalHost().getHostAddress();
+            byte[] buffer = fullMessage.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, ClientConfig.BROADCAST_PORT);
             socket.send(packet);
-            System.out.println("Sent broadcast message: " + message);
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -112,19 +113,46 @@ public class LivestreamClient {
                 if (message.startsWith("ROOM_LIST:")) {
                     updateRoomList(message.substring(10));
                 } else if (message.startsWith("COMMENT:")) {
-                    String comment = message.substring(8);
-                    if (liveStreamPanel != null) {
-                        liveStreamPanel.addComment(comment);
-                    } else if (roomOwnerPanel != null) {
-                        roomOwnerPanel.addComment(comment);
-                    } else if (roomParticipantPanel != null) {
-                        roomParticipantPanel.addComment(comment);
+                    String[] parts = message.split(":");
+                    String sender = parts[1];
+                    String comment = parts[2];
+                    boolean isOwner = sender.equals(getRoomOwner(currentRoom));
+                    if (!sender.equals(username) && currentRoom != null && currentRoom.equals(parts[3])) {
+                        comment = sender + ": " + comment;
+                        if (liveStreamPanel != null) {
+                            liveStreamPanel.addComment(comment, isOwner);
+                        } else if (roomOwnerPanel != null) {
+                            roomOwnerPanel.addComment(comment, isOwner);
+                        } else if (roomParticipantPanel != null) {
+                            roomParticipantPanel.addComment(comment, isOwner);
+                        }
+                    }
+                } else if (message.startsWith("ROOM_CLOSED:")) {
+                    String roomName = message.split(":")[1];
+                    if (currentRoom != null && currentRoom.equals(roomName)) {
+                        JOptionPane.showMessageDialog(frame, "The room has been closed by the owner.", "Room Closed", JOptionPane.INFORMATION_MESSAGE);
+                        leaveRoom();
                     }
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    
+    private static String getRoomOwner(String roomName) {
+        for (int i = 0; i < roomListModel.size(); i++) {
+            String roomDetails = roomListModel.get(i);
+            if (roomDetails.startsWith(roomName + " (Owner: ")) {
+                int startIndex = roomDetails.indexOf("Owner: ") + 7;
+                int endIndex = roomDetails.indexOf(", Participants:");
+                if (startIndex != -1 && endIndex != -1) {
+                    System.out.println("Room owner: " + roomDetails.substring(startIndex, endIndex));
+                    return roomDetails.substring(startIndex, endIndex);
+                }
+            }
+        }
+        return null;
     }
 
     private static void updateRoomList(String roomList) {
@@ -160,9 +188,9 @@ public class LivestreamClient {
 
     public static void joinRoom(String roomName) {
         currentRoom = roomName;
-        System.out.println("Attempting to join room: " + roomName); // Debug statement
+        System.out.println("Attempting to join room: " + roomName);
         sendBroadcastMessage("JOIN_ROOM:" + username + ":" + roomName);
-        checkRoomOwnerAfterUpdate = true; // Set flag to re-check room owner status after room list update
+        checkRoomOwnerAfterUpdate = true;
     }
 
     public static void leaveRoom() {
@@ -184,7 +212,19 @@ public class LivestreamClient {
     }
 
     public static void sendComment(String comment) {
-        sendBroadcastMessage("COMMENT:" + username + ":" + comment);
+        if (currentRoom != null) {
+            String message = "COMMENT:" + username + ":" + comment + ":" + currentRoom;
+            sendBroadcastMessage(message);
+        }
+    }
+
+    private static String getLocalAddress() {
+        try {
+            return InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+            return "unknown";
+        }
     }
 
     public static String getUsername() {
