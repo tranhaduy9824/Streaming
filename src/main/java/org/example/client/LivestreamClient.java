@@ -205,9 +205,10 @@ public class LivestreamClient {
         String message = "CREATE_ROOM:" + username + ":" + roomName;
         if (sendBroadcastMessage(message)) {
             System.out.println("Create room request sent successfully for room: " + roomName);
-            joinRoom(roomName);
+            currentRoom = roomName;
+            showRoomOwnerPanel();
         } else {
-            JOptionPane.showMessageDialog(frame, "Failed to create room.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(frame, "Failed to send create room request.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
