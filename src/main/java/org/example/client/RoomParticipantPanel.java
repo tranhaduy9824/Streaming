@@ -2,12 +2,10 @@ package org.example.client;
 
 import javax.swing.*;
 import javax.swing.text.*;
-
 import org.example.config.ServerConfig;
 import org.example.utils.Constants;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
-
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -15,6 +13,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Base64;
+
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 
@@ -57,7 +57,8 @@ public class RoomParticipantPanel extends JPanel {
 
     private void connectWebSocket() {
         try {
-            client = new WebSocketClient(new URI("ws://" + Constants.SERVER_ADDRESS + ":" + ServerConfig.SIGNALING_PORT)) {
+            client = new WebSocketClient(
+                    new URI("ws://" + Constants.SERVER_ADDRESS + ":" + ServerConfig.SIGNALING_PORT)) {
                 @Override
                 public void onOpen(ServerHandshake handshakedata) {
                     System.out.println("Connected to server");
@@ -68,9 +69,11 @@ public class RoomParticipantPanel extends JPanel {
                     System.out.println("Received: " + message);
                     SwingUtilities.invokeLater(() -> {
                         try {
-                            byte[] imageBytes = message.getBytes();
+                            byte[] imageBytes = Base64.getDecoder().decode(message);
                             BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageBytes));
-                            videoLabel.setIcon(new ImageIcon(image));
+                            if (image != null) {
+                                videoLabel.setIcon(new ImageIcon(image));
+                            }
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -119,7 +122,7 @@ public class RoomParticipantPanel extends JPanel {
         try {
             Style style = doc.addStyle("Style", null);
             if (isOwner) {
-                StyleConstants.setForeground(style, Color.RED);
+                StyleConstants.setForeground(style, Color.BLUE);
                 doc.insertString(doc.getLength(), "Owner: " + comment + "\n", style);
             } else {
                 StyleConstants.setForeground(style, Color.BLACK);

@@ -4,13 +4,23 @@ import org.bytedeco.javacv.Frame;
 import org.bytedeco.javacv.FrameGrabber;
 import org.bytedeco.javacv.Java2DFrameConverter;
 import org.bytedeco.javacv.VideoInputFrameGrabber;
+import org.example.config.ServerConfig;
+import org.example.utils.Constants;
+import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.handshake.ServerHandshake;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Base64;
 
 public class RoomOwnerPanel extends JPanel {
     private JTextPane commentPane;
@@ -20,6 +30,7 @@ public class RoomOwnerPanel extends JPanel {
     private FrameGrabber grabber;
     private Java2DFrameConverter converter;
     private BufferedImage currentImage;
+    private WebSocketClient client;
 
     public RoomOwnerPanel() {
         setLayout(new BorderLayout());
@@ -57,7 +68,38 @@ public class RoomOwnerPanel extends JPanel {
         closeRoomButton.addActionListener(new CloseRoomActionListener());
         add(closeRoomButton, BorderLayout.NORTH);
 
+        connectWebSocket();
         startVideoStream();
+    }
+
+    private void connectWebSocket() {
+        try {
+            client = new WebSocketClient(
+                    new URI("ws://" + Constants.SERVER_ADDRESS + ":" + ServerConfig.SIGNALING_PORT)) {
+                @Override
+                public void onOpen(ServerHandshake handshakedata) {
+                    System.out.println("Connected to server");
+                }
+
+                @Override
+                public void onMessage(String message) {
+                    System.out.println("Received: " + message);
+                }
+
+                @Override
+                public void onClose(int code, String reason, boolean remote) {
+                    System.out.println("Connection closed");
+                }
+
+                @Override
+                public void onError(Exception ex) {
+                    ex.printStackTrace();
+                }
+            };
+            client.connect();
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
     }
 
     private void startVideoStream() {
@@ -67,10 +109,24 @@ public class RoomOwnerPanel extends JPanel {
                 grabber.start();
                 converter = new Java2DFrameConverter();
                 while (true) {
-                    Frame frame = grabber.grab();
-                    if (frame != null) {
-                        currentImage = converter.convert(frame);
-                        videoPanel.repaint();
+                    try {
+                        Frame frame = grabber.grab();
+                        if (frame != null) {
+                            currentImage = converter.convert(frame);
+                            videoPanel.repaint();
+
+                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                            ImageIO.write(currentImage, "jpg", baos);
+                            byte[] imageBytes = baos.toByteArray();
+                            String encodedImage = Base64.getEncoder().encodeToString(imageBytes);
+                            if (client != null && client.isOpen()) {
+                                client.send(encodedImage);
+                            } else {
+                                System.out.println("WebSocket connection is not open.");
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
             } catch (FrameGrabber.Exception e) {
@@ -95,6 +151,9 @@ public class RoomOwnerPanel extends JPanel {
         @Override
         public void actionPerformed(ActionEvent e) {
             LivestreamClient.leaveRoom();
+            if (client != null) {
+                client.close();
+            }
         }
     }
 
