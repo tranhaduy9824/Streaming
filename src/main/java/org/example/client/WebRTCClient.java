@@ -16,6 +16,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Base64;
 
 public class WebRTCClient extends JFrame {
     private WebSocketClient client;
@@ -79,8 +80,9 @@ public class WebRTCClient extends JFrame {
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     ImageIO.write(image, "jpg", baos);
                     byte[] imageBytes = baos.toByteArray();
+                    String encodedImage = Base64.getEncoder().encodeToString(imageBytes);
                     if (client != null && client.isOpen()) {
-                        client.send(imageBytes);
+                        client.send(encodedImage);
                     } else {
                         System.out.println("WebSocket connection is not open.");
                     }
