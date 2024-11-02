@@ -1,10 +1,14 @@
-package org.example.server;
+package org.example.server.Networking;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import org.example.config.ServerConfig;
+import org.example.server.manager.RoomManager;
+import org.example.server.manager.UserManager;
+import org.example.server.model.Participant;
+import org.example.server.model.Room;
 
 public class UDPBroadcastServer extends Thread {
     private UserManager userManager;

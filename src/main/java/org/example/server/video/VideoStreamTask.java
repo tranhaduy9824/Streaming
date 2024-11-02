@@ -1,4 +1,4 @@
-package org.example.server;
+package org.example.server.video;
 
 public class VideoStreamTask implements Runnable {
     private String roomName;

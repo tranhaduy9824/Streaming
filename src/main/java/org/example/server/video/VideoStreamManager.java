@@ -1,4 +1,4 @@
-package org.example.server;
+package org.example.server.video;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;

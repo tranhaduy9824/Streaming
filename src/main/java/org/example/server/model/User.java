@@ -1,4 +1,4 @@
-package org.example.server;
+package org.example.server.model;
 
 public class User {
     private String username;

@@ -1,6 +1,9 @@
-package org.example.client;
+package org.example.client.UI;
 
 import javax.swing.*;
+
+import org.example.client.LivestreamClient;
+
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;

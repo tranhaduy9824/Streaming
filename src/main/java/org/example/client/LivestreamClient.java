@@ -1,5 +1,12 @@
 package org.example.client;
 
+import org.example.client.UI.LiveStreamPanel;
+import org.example.client.UI.LoginPanel;
+import org.example.client.UI.MainPanel;
+import org.example.client.UI.RegistrationPanel;
+import org.example.client.UI.RoomListPanel;
+import org.example.client.UI.RoomOwnerPanel;
+import org.example.client.UI.RoomParticipantPanel;
 import org.example.config.ClientConfig;
 
 import javax.swing.*;
@@ -24,11 +31,12 @@ public class LivestreamClient {
     public static void main(String[] args) {
         frame = new JFrame("Livestream Application");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(600, 400);
+        frame.setSize(800, 400);
         frame.setLayout(new BorderLayout());
 
         showLoginPanel();
 
+        frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
         new Thread(LivestreamClient::listenForBroadcastMessages).start();

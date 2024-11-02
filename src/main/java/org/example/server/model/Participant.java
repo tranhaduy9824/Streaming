@@ -1,4 +1,4 @@
-package org.example.server;
+package org.example.server.model;
 
 public class Participant {
     private String username;
