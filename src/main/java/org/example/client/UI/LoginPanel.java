@@ -8,8 +8,12 @@ import org.example.client.UI.components.TextFieldPassword;
 import org.example.client.UI.components.TextFieldUsername;
 import org.example.client.UI.components.UIUtils;
 import org.example.client.UI.components.Toaster.Toaster;
+import org.example.controller.UserController;
+import org.example.server.model.User;
+
 import java.awt.*;
 import java.awt.event.*;
+import java.sql.SQLException;
 import java.util.Objects;
 
 public class LoginPanel extends JPanel {
@@ -17,6 +21,7 @@ public class LoginPanel extends JPanel {
     private final Toaster toaster;
     private TextFieldUsername usernameField;
     private TextFieldPassword passwordField;
+    private UserController userController = new UserController();
 
     public LoginPanel() {
         setLayout(new GridBagLayout());
@@ -190,13 +195,24 @@ public class LoginPanel extends JPanel {
 
     private void loginEventHandler() {
         String username = usernameField.getText();
-        String message = "LOGIN:" + username;
-        if (LivestreamClient.sendBroadcastMessage(message)) {
-            System.out.println("Sent login request for username: " + username);
-            LivestreamClient.setUsername(username);
-            LivestreamClient.showMainPanel();
-        } else {
-            toaster.error("Login failed");
+        String password = new String(passwordField.getPassword());
+        try {
+            User user = userController.login(username, password);
+            if (user != null) {
+                String message = "LOGIN:" + username;
+                if (LivestreamClient.sendBroadcastMessage(message)) {
+                    System.out.println("Sent login request for username: " + username);
+                    LivestreamClient.setUsername(username);
+                    LivestreamClient.showMainPanel();
+                } else {
+                    toaster.error("Login failed");
+                }
+            } else {
+                toaster.error("Invalid username or password");
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            toaster.error("An error occurred while logging in");
         }
     }
 }

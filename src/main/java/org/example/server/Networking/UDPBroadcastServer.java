@@ -55,8 +55,8 @@ public class UDPBroadcastServer extends Thread {
         String[] parts = message.split(":");
         String command = parts[0];
         String username = parts.length > 1 ? parts[1] : null;
-        String roomName = parts.length > 2 ? parts[2] : null;
-        String senderAddress = parts.length > 3 ? parts[3] : null;
+        String password = parts.length > 2 ? parts[2] : null;
+        String roomName = parts.length > 3 ? parts[3] : null;
 
         if ("ROOM_LIST".equals(command)) {
             return;
@@ -64,7 +64,7 @@ public class UDPBroadcastServer extends Thread {
 
         switch (command) {
             case "REGISTER":
-                if (userManager.registerUser(username)) {
+                if (userManager.registerUser(username, password)) {
                     userManager.getUser(username).setAddress(address);
                     System.out.println("User registered: " + username + " at " + address);
                     sendRoomList(address);
@@ -73,7 +73,7 @@ public class UDPBroadcastServer extends Thread {
                 }
                 break;
             case "LOGIN":
-                if (userManager.loginUser(username)) {
+                if (userManager.loginUser(username, password)) {
                     System.out.println("User logged in: " + username);
                     sendRoomList(address);
                 } else {

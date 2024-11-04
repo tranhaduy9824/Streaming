@@ -8,8 +8,11 @@ import org.example.client.UI.components.TextFieldPassword;
 import org.example.client.UI.components.TextFieldUsername;
 import org.example.client.UI.components.UIUtils;
 import org.example.client.UI.components.Toaster.Toaster;
+import org.example.controller.UserController;
+
 import java.awt.*;
 import java.awt.event.*;
+import java.sql.SQLException;
 import java.util.Objects;
 
 public class RegistrationPanel extends JPanel {
@@ -18,6 +21,7 @@ public class RegistrationPanel extends JPanel {
     private TextFieldUsername usernameField;
     private TextFieldPassword passwordField;
     private TextFieldPassword confirmPasswordField;
+    private UserController userController = new UserController();
 
     public RegistrationPanel() {
         setLayout(new GridBagLayout());
@@ -229,13 +233,19 @@ public class RegistrationPanel extends JPanel {
             return;
         }
 
-        String message = "REGISTER:" + username;
-        if (LivestreamClient.sendBroadcastMessage(message)) {
-            System.out.println("Sent registration request for username: " + username);
-            LivestreamClient.setUsername(username); // Set the username
-            LivestreamClient.showMainPanel();
-        } else {
-            toaster.error("Register failed.");
+        try {
+            userController.register(username, password);
+            String message = "REGISTER:" + username;
+            if (LivestreamClient.sendBroadcastMessage(message)) {
+                System.out.println("Sent registration request for username: " + username);
+                LivestreamClient.setUsername(username); // Set the username
+                LivestreamClient.showMainPanel();
+            } else {
+                toaster.error("Register failed.");
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            toaster.error("An error occurred while registering.");
         }
     }
 }
