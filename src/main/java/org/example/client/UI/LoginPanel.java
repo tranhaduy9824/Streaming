@@ -2,12 +2,12 @@ package org.example.client.UI;
 
 import javax.swing.*;
 
+import org.example.client.LivestreamClient;
 import org.example.client.UI.components.HyperlinkText;
 import org.example.client.UI.components.TextFieldPassword;
 import org.example.client.UI.components.TextFieldUsername;
 import org.example.client.UI.components.UIUtils;
 import org.example.client.UI.components.Toaster.Toaster;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Objects;
@@ -15,6 +15,8 @@ import java.util.Objects;
 public class LoginPanel extends JPanel {
 
     private final Toaster toaster;
+    private TextFieldUsername usernameField;
+    private TextFieldPassword passwordField;
 
     public LoginPanel() {
         setLayout(new GridBagLayout());
@@ -25,37 +27,24 @@ public class LoginPanel extends JPanel {
         JPanel mainJPanel = getMainJPanel();
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = 2;
         add(mainJPanel, gbc);
 
         addLogo(mainJPanel);
-
         addSeparator(mainJPanel);
-
         addUsernameTextField(mainJPanel);
-
         addPasswordTextField(mainJPanel);
-
         addLoginButton(mainJPanel);
-
-        addForgotPasswordButton(mainJPanel);
-
         addRegisterButton(mainJPanel);
 
-        this.add(mainJPanel);
-        this.setPreferredSize(new Dimension(800, 400));
-
         toaster = new Toaster(mainJPanel);
+        this.setPreferredSize(new Dimension(800, 450));
     }
 
     private JPanel getMainJPanel() {
-        Dimension size = new Dimension(800, 400);
-
-        JPanel panel1 = new JPanel();
-        panel1.setSize(size);
-        panel1.setPreferredSize(size);
-        panel1.setBackground(UIUtils.COLOR_BACKGROUND);
-        panel1.setLayout(null);
+        JPanel panel = new JPanel();
+        panel.setPreferredSize(new Dimension(800, 450));
+        panel.setBackground(UIUtils.COLOR_BACKGROUND);
+        panel.setLayout(null);
 
         MouseAdapter ma = new MouseAdapter() {
             int lastX, lastY;
@@ -77,40 +66,35 @@ public class LoginPanel extends JPanel {
                 lastY = y;
             }
         };
+        panel.addMouseListener(ma);
+        panel.addMouseMotionListener(ma);
 
-        panel1.addMouseListener(ma);
-        panel1.addMouseMotionListener(ma);
-
-        return panel1;
+        return panel;
     }
 
-    private void addSeparator(JPanel panel1) {
-        JSeparator separator1 = new JSeparator();
-        separator1.setOrientation(SwingConstants.VERTICAL);
-        separator1.setForeground(UIUtils.COLOR_OUTLINE);
-        panel1.add(separator1);
-        separator1.setBounds(310, 80, 1, 240);
+    private void addLogo(JPanel panel) {
+        JLabel label = new JLabel();
+        label.setFocusable(false);
+
+        ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("login.jpg")));
+        Image scaledImage = icon.getImage().getScaledInstance(250, 250, Image.SCALE_SMOOTH);
+        label.setIcon(new ImageIcon(scaledImage));
+
+        label.setBounds(40, 90, 250, 250);
+        panel.add(label);
     }
 
-    private void addLogo(JPanel panel1) {
-        JLabel label1 = new JLabel();
-        label1.setFocusable(false);
-        ImageIcon icon = new ImageIcon(
-                Objects.requireNonNull(getClass().getClassLoader().getResource("login.jpg")).getFile());
-        label1.setIcon(icon);
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridheight = 2;
-        gbc.insets = new Insets(0, 0, 20, 0);
-        panel1.add(label1, gbc);
+    private void addSeparator(JPanel panel) {
+        JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
+        separator.setForeground(UIUtils.COLOR_OUTLINE);
+        separator.setBounds(340, 80, 1, 290);
+        panel.add(separator);
     }
 
-    private void addUsernameTextField(JPanel panel1) {
-        TextFieldUsername usernameField = new TextFieldUsername();
+    private void addUsernameTextField(JPanel panel) {
+        usernameField = new TextFieldUsername();
+        usernameField.setBounds(420, 110, 250, 44);
 
-        usernameField.setBounds(423, 109, 250, 44);
         usernameField.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
@@ -130,14 +114,13 @@ public class LoginPanel extends JPanel {
                 usernameField.setBorderColor(UIUtils.COLOR_OUTLINE);
             }
         });
-
-        panel1.add(usernameField);
+        panel.add(usernameField);
     }
 
-    private void addPasswordTextField(JPanel panel1) {
-        TextFieldPassword passwordField = new TextFieldPassword();
+    private void addPasswordTextField(JPanel panel) {
+        passwordField = new TextFieldPassword();
+        passwordField.setBounds(420, 170, 250, 44);
 
-        passwordField.setBounds(423, 168, 250, 44);
         passwordField.addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
@@ -159,36 +142,27 @@ public class LoginPanel extends JPanel {
                     loginEventHandler();
             }
         });
-
-        panel1.add(passwordField);
+        panel.add(passwordField);
     }
 
-    private void addLoginButton(JPanel panel1) {
-        final Color[] loginButtonColors = { UIUtils.COLOR_INTERACTIVE, Color.white };
-
+    private void addLoginButton(JPanel panel) {
         JLabel loginButton = new JLabel() {
             @Override
             protected void paintComponent(Graphics g) {
-                Graphics2D g2 = UIUtils.get2dGraphics(g);
-                super.paintComponent(g2);
-
-                Insets insets = getInsets();
-                int w = getWidth() - insets.left - insets.right;
-                int h = getHeight() - insets.top - insets.bottom;
-                g2.setColor(loginButtonColors[0]);
-                g2.fillRoundRect(insets.left, insets.top, w, h, UIUtils.ROUNDNESS, UIUtils.ROUNDNESS);
-
-                FontMetrics metrics = g2.getFontMetrics(UIUtils.FONT_GENERAL_UI);
-                int x2 = (getWidth() - metrics.stringWidth(UIUtils.BUTTON_TEXT_LOGIN)) / 2;
-                int y2 = ((getHeight() - metrics.getHeight()) / 2) + metrics.getAscent();
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(UIUtils.COLOR_INTERACTIVE);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), UIUtils.ROUNDNESS, UIUtils.ROUNDNESS);
+                g2.setColor(Color.white);
                 g2.setFont(UIUtils.FONT_GENERAL_UI);
-                g2.setColor(loginButtonColors[1]);
-                g2.drawString(UIUtils.BUTTON_TEXT_LOGIN, x2, y2);
+                g2.drawString(UIUtils.BUTTON_TEXT_LOGIN, getWidth() / 2 - 30, getHeight() / 2 + 5);
             }
         };
 
+        loginButton.setBounds(420, 250, 250, 44);
+        loginButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         loginButton.addMouseListener(new MouseAdapter() {
-
             @Override
             public void mousePressed(MouseEvent e) {
                 loginEventHandler();
@@ -196,38 +170,33 @@ public class LoginPanel extends JPanel {
 
             @Override
             public void mouseEntered(MouseEvent e) {
-                loginButtonColors[0] = UIUtils.COLOR_INTERACTIVE_DARKER;
-                loginButtonColors[1] = UIUtils.OFFWHITE;
-                loginButton.repaint();
+                loginButton.setBackground(UIUtils.COLOR_INTERACTIVE_DARKER);
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-                loginButtonColors[0] = UIUtils.COLOR_INTERACTIVE;
-                loginButtonColors[1] = Color.white;
-                loginButton.repaint();
+                loginButton.setBackground(UIUtils.COLOR_INTERACTIVE);
             }
         });
 
-        loginButton.setBackground(UIUtils.COLOR_BACKGROUND);
-        loginButton.setBounds(423, 247, 250, 44);
-        loginButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        panel1.add(loginButton);
+        panel.add(loginButton);
     }
 
-    private void addForgotPasswordButton(JPanel panel1) {
-        panel1.add(new HyperlinkText(UIUtils.BUTTON_TEXT_FORGOT_PASS, 423, 300, () -> {
-            toaster.error("Forgot password event");
-        }));
-    }
-
-    private void addRegisterButton(JPanel panel1) {
-        panel1.add(new HyperlinkText(UIUtils.BUTTON_TEXT_REGISTER, 631, 300, () -> {
-            toaster.success("Register event");
+    private void addRegisterButton(JPanel panel) {
+        panel.add(new HyperlinkText(UIUtils.BUTTON_TEXT_REGISTER, 625, 320, () -> {
+            LivestreamClient.showRegistrationPanel();
         }));
     }
 
     private void loginEventHandler() {
-        toaster.warn("Login event");
+        String username = usernameField.getText();
+        String message = "LOGIN:" + username;
+        if (LivestreamClient.sendBroadcastMessage(message)) {
+            System.out.println("Sent login request for username: " + username);
+            LivestreamClient.setUsername(username);
+            LivestreamClient.showMainPanel();
+        } else {
+            toaster.error("Login failed");
+        }
     }
 }
