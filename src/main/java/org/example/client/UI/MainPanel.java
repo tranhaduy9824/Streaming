@@ -1,6 +1,11 @@
 package org.example.client.UI;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellRenderer;
+
 import org.example.client.LivestreamClient;
 import org.example.client.UI.components.UIUtils;
 import java.awt.*;
@@ -9,6 +14,8 @@ import java.awt.event.MouseEvent;
 
 public class MainPanel extends JPanel {
     private JList<String> roomList;
+    private JTable roomTable;
+    private DefaultTableModel tableModel;
 
     public MainPanel() {
         setLayout(new BorderLayout());
@@ -21,21 +28,52 @@ public class MainPanel extends JPanel {
         usernameLabel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         add(usernameLabel, BorderLayout.NORTH);
 
-        roomList = new JList<>(LivestreamClient.getRoomListModel());
-        roomList.setBackground(UIUtils.COLOR_BACKGROUND);
-        roomList.setForeground(UIUtils.OFFWHITE);
-        roomList.setFont(UIUtils.FONT_GENERAL_UI);
-        roomList.setSelectionBackground(UIUtils.COLOR_INTERACTIVE);
-        roomList.setSelectionForeground(Color.white);
-        add(new JScrollPane(roomList), BorderLayout.CENTER);
+        String[] columnNames = { "Name", "Owner", "Participants" };
+        tableModel = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        roomTable = new JTable(tableModel) {
+            @Override
+            public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+                Component c = super.prepareRenderer(renderer, row, column);
+                if (isRowSelected(row)) {
+                    c.setBackground(UIUtils.COLOR_INTERACTIVE);
+                    c.setForeground(Color.white);
+                } else {
+                    c.setBackground(UIUtils.COLOR_BACKGROUND);
+                    c.setForeground(UIUtils.OFFWHITE);
+                }
+                if (c instanceof JLabel) {
+                    ((JLabel) c).setHorizontalAlignment(SwingConstants.CENTER);
+                }
+                return c;
+            }
+        };
+        roomTable.setBackground(UIUtils.COLOR_BACKGROUND);
+        roomTable.setForeground(UIUtils.OFFWHITE);
+        roomTable.setFont(UIUtils.FONT_GENERAL_UI);
+        roomTable.setSelectionBackground(UIUtils.COLOR_INTERACTIVE);
+        roomTable.setSelectionForeground(Color.white);
+        roomTable.setRowHeight(30);
 
-        roomList.addMouseListener(new MouseAdapter() {
+        JTableHeader tableHeader = roomTable.getTableHeader();
+        tableHeader.setBackground(UIUtils.COLOR_BACKGROUND);
+        tableHeader.setForeground(UIUtils.OFFWHITE);
+        tableHeader.setFont(UIUtils.FONT_GENERAL_UI);
+        ((DefaultTableCellRenderer) tableHeader.getDefaultRenderer()).setHorizontalAlignment(JLabel.CENTER);
+
+        add(new JScrollPane(roomTable), BorderLayout.CENTER);
+
+        roomTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
-                    String selectedRoom = roomList.getSelectedValue();
-                    if (selectedRoom != null) {
-                        String roomName = selectedRoom.split(" ")[0];
+                    int selectedRow = roomTable.getSelectedRow();
+                    if (selectedRow != -1) {
+                        String roomName = (String) tableModel.getValueAt(selectedRow, 0);
                         LivestreamClient.joinRoom(roomName);
                     }
                 }
@@ -83,5 +121,18 @@ public class MainPanel extends JPanel {
                 button.setBackground(UIUtils.COLOR_INTERACTIVE);
             }
         });
+    }
+
+    public void updateRoomList(String roomListString) {
+        tableModel.setRowCount(0); // Clear existing rows
+        String[] rooms = roomListString.split(",");
+        for (String room : rooms) {
+            if (!room.trim().isEmpty()) {
+                String[] roomDetails = room.split("\\|");
+                if (roomDetails.length == 3) {
+                    tableModel.addRow(roomDetails);
+                }
+            }
+        }
     }
 }
