@@ -89,6 +89,11 @@
             <artifactId>videoinput</artifactId>
             <version>0.200-1.5.9</version>
         </dependency>
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.33</version>
+        </dependency>
     </dependencies>
 
     <build>
