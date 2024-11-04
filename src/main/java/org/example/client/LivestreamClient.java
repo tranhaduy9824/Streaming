@@ -4,7 +4,6 @@ import org.example.client.UI.LiveStreamPanel;
 import org.example.client.UI.LoginPanel;
 import org.example.client.UI.MainPanel;
 import org.example.client.UI.RegistrationPanel;
-import org.example.client.UI.RoomListPanel;
 import org.example.client.UI.RoomOwnerPanel;
 import org.example.client.UI.RoomParticipantPanel;
 import org.example.client.UI.components.Toaster.Toaster;
@@ -27,7 +26,7 @@ public class LivestreamClient {
     private static RoomOwnerPanel roomOwnerPanel;
     private static RoomParticipantPanel roomParticipantPanel;
     private static boolean checkRoomOwnerAfterUpdate = false;
-    private Toaster toaster;
+    private static Toaster toaster;
 
     public static void main(String[] args) {
         frame = new JFrame("Livestream Application");
@@ -60,13 +59,6 @@ public class LivestreamClient {
     public static void showMainPanel() {
         frame.getContentPane().removeAll();
         frame.add(new MainPanel(), BorderLayout.CENTER);
-        frame.revalidate();
-        frame.repaint();
-    }
-
-    public static void showRoomListPanel() {
-        frame.getContentPane().removeAll();
-        frame.add(new RoomListPanel(), BorderLayout.CENTER);
         frame.revalidate();
         frame.repaint();
     }
@@ -139,8 +131,7 @@ public class LivestreamClient {
                 } else if (message.startsWith("ROOM_CLOSED:")) {
                     String roomName = message.split(":")[1];
                     if (currentRoom != null && currentRoom.equals(roomName)) {
-                        JOptionPane.showMessageDialog(frame, "The room has been closed by the owner.", "Room Closed",
-                                JOptionPane.INFORMATION_MESSAGE);
+                        toaster.success("The room has been closed by the owner.");
                         leaveRoom();
                     }
                 }
@@ -181,7 +172,8 @@ public class LivestreamClient {
 
                         if (currentRoom != null && currentRoom.equals(roomName) && roomOwnerPanel != null) {
                             roomOwnerPanel.updateParticipantsCount(Integer.parseInt(participantCount));
-                        } else if (currentRoom != null && currentRoom.equals(roomName) && roomParticipantPanel != null) {
+                        } else if (currentRoom != null && currentRoom.equals(roomName)
+                                && roomParticipantPanel != null) {
                             roomParticipantPanel.updateParticipantsCount(Integer.parseInt(participantCount));
                         }
                     } else {
@@ -198,6 +190,11 @@ public class LivestreamClient {
                 } else {
                     showRoomParticipantPanel();
                 }
+            }
+
+            if (frame.getContentPane().getComponent(0) instanceof MainPanel) {
+                MainPanel mainPanel = (MainPanel) frame.getContentPane().getComponent(0);
+                mainPanel.updateRoomList(roomList);
             }
         });
     }
@@ -224,8 +221,7 @@ public class LivestreamClient {
             currentRoom = roomName;
             showRoomOwnerPanel();
         } else {
-            JOptionPane.showMessageDialog(frame, "Failed to send create room request.", "Error",
-                    JOptionPane.ERROR_MESSAGE);
+            toaster.error("Failed to send create room request.");
         }
     }
 
