@@ -1,7 +1,12 @@
-package org.example.server;
+package org.example.server.manager;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.example.server.model.Participant;
+import org.example.server.model.Room;
+import org.example.server.video.VideoStreamManager;
+import org.example.server.video.VideoStreamTask;
 
 public class RoomManager {
     private Map<String, Room> rooms;

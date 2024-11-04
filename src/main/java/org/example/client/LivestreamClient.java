@@ -1,5 +1,13 @@
 package org.example.client;
 
+import org.example.client.UI.LiveStreamPanel;
+import org.example.client.UI.LoginPanel;
+import org.example.client.UI.MainPanel;
+import org.example.client.UI.RegistrationPanel;
+import org.example.client.UI.RoomListPanel;
+import org.example.client.UI.RoomOwnerPanel;
+import org.example.client.UI.RoomParticipantPanel;
+import org.example.client.UI.components.Toaster.Toaster;
 import org.example.config.ClientConfig;
 
 import javax.swing.*;
@@ -9,7 +17,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.net.UnknownHostException;
 
 public class LivestreamClient {
     private static JFrame frame;
@@ -20,15 +27,17 @@ public class LivestreamClient {
     private static RoomOwnerPanel roomOwnerPanel;
     private static RoomParticipantPanel roomParticipantPanel;
     private static boolean checkRoomOwnerAfterUpdate = false;
+    private Toaster toaster;
 
     public static void main(String[] args) {
         frame = new JFrame("Livestream Application");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(600, 400);
+        frame.setSize(840, 550);
         frame.setLayout(new BorderLayout());
 
         showLoginPanel();
 
+        frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 
         new Thread(LivestreamClient::listenForBroadcastMessages).start();
@@ -130,7 +139,8 @@ public class LivestreamClient {
                 } else if (message.startsWith("ROOM_CLOSED:")) {
                     String roomName = message.split(":")[1];
                     if (currentRoom != null && currentRoom.equals(roomName)) {
-                        JOptionPane.showMessageDialog(frame, "The room has been closed by the owner.", "Room Closed", JOptionPane.INFORMATION_MESSAGE);
+                        JOptionPane.showMessageDialog(frame, "The room has been closed by the owner.", "Room Closed",
+                                JOptionPane.INFORMATION_MESSAGE);
                         leaveRoom();
                     }
                 }
@@ -139,7 +149,7 @@ public class LivestreamClient {
             e.printStackTrace();
         }
     }
-    
+
     private static String getRoomOwner(String roomName) {
         for (int i = 0; i < roomListModel.size(); i++) {
             String roomDetails = roomListModel.get(i);
@@ -168,6 +178,12 @@ public class LivestreamClient {
                         String participantCount = roomDetails[2];
                         roomListModel.addElement(
                                 roomName + " (Owner: " + owner + ", Participants: " + participantCount + ")");
+
+                        if (currentRoom != null && currentRoom.equals(roomName) && roomOwnerPanel != null) {
+                            roomOwnerPanel.updateParticipantsCount(Integer.parseInt(participantCount));
+                        } else if (currentRoom != null && currentRoom.equals(roomName) && roomParticipantPanel != null) {
+                            roomParticipantPanel.updateParticipantsCount(Integer.parseInt(participantCount));
+                        }
                     } else {
                         System.err.println("Invalid room details: " + room);
                     }
@@ -208,7 +224,8 @@ public class LivestreamClient {
             currentRoom = roomName;
             showRoomOwnerPanel();
         } else {
-            JOptionPane.showMessageDialog(frame, "Failed to send create room request.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(frame, "Failed to send create room request.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -216,15 +233,6 @@ public class LivestreamClient {
         if (currentRoom != null) {
             String message = "COMMENT:" + username + ":" + comment + ":" + currentRoom;
             sendBroadcastMessage(message);
-        }
-    }
-
-    private static String getLocalAddress() {
-        try {
-            return InetAddress.getLocalHost().getHostAddress();
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-            return "unknown";
         }
     }
 

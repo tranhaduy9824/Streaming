@@ -1,4 +1,4 @@
-package org.example.server;
+package org.example.server.model;
 
 import java.util.ArrayList;
 import java.util.List;

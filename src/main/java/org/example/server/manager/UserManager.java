@@ -1,7 +1,9 @@
-package org.example.server;
+package org.example.server.manager;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import org.example.server.model.User;
 
 public class UserManager {
     private Map<String, User> users;
