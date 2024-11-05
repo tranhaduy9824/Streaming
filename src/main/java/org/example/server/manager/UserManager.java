@@ -33,6 +33,7 @@ public class UserManager {
 
     public synchronized boolean loginUser(String username, String password) {
         try {
+            System.out.println("User logged in: " + username + password);
             User user = userDAO.getUserByUsername(username);
             if (user != null && user.getPassword().equals(password)) {
                 users.put(username, user);

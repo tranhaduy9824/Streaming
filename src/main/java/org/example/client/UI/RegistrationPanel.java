@@ -235,10 +235,9 @@ public class RegistrationPanel extends JPanel {
 
         try {
             userController.register(username, password);
-            String message = "REGISTER:" + username;
+            String message = "REGISTER:" + username + ":" + password;
             if (LivestreamClient.sendBroadcastMessage(message)) {
-                System.out.println("Sent registration request for username: " + username);
-                LivestreamClient.setUsername(username); // Set the username
+                LivestreamClient.setUsername(username);
                 LivestreamClient.showMainPanel();
             } else {
                 toaster.error("Register failed.");
