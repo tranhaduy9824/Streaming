@@ -20,10 +20,10 @@ public class UserController {
         return null;
     }
 
-    public void register(String username, String password) throws SQLException {
+    public User register(String username, String password) throws SQLException {
         User user = new User();
         user.setUsername(username);
         user.setPassword(password);
-        userDAO.createUser(user);
+        return userDAO.createUser(user);
     }
 }

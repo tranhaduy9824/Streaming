@@ -56,7 +56,9 @@ public class UDPBroadcastServer extends Thread {
         String command = parts[0];
         String username = parts.length > 1 ? parts[1] : null;
         String password = parts.length > 2 ? parts[2] : null;
+        String userId = parts.length > 2 ? parts[2] : null;
         String roomName = parts.length > 3 ? parts[3] : null;
+        String comment = parts.length > 4 ? parts[4] : null;
 
         if ("ROOM_LIST".equals(command)) {
             return;
@@ -67,24 +69,25 @@ public class UDPBroadcastServer extends Thread {
                 if (userManager.registerUser(username, password)) {
                     userManager.getUser(username).setAddress(address);
                     System.out.println("User registered: " + username + " at " + address);
-                    sendRoomList(address);
                 } else {
                     System.out.println("Registration failed for user: " + username);
                 }
+                sendRoomList(address);
                 break;
             case "LOGIN":
+                password = parts.length > 2 ? parts[2] : null;
                 if (userManager.loginUser(username, password)) {
                     System.out.println("User logged in: " + username);
-                    sendRoomList(address);
                 } else {
                     System.out.println("Login failed for user: " + username);
                 }
+                sendRoomList(address);
                 break;
             case "CREATE_ROOM":
                 if (roomName == null || roomName.trim().isEmpty()) {
                     System.out.println("Invalid room name: " + roomName);
                 } else {
-                    roomManager.createRoom(roomName, username);
+                    roomManager.createRoom(roomName, username, userId);
                     sendRoomList(address);
                 }
                 break;
@@ -101,7 +104,7 @@ public class UDPBroadcastServer extends Thread {
             case "LEAVE_ROOM":
                 if (roomName != null && roomManager.getRooms().containsKey(roomName)) {
                     Room room = roomManager.getRooms().get(roomName);
-                    room.removeParticipant(username);
+                    room.removeParticipant(userId);
                     System.out.println("User " + username + " left room: " + roomName);
                     if (room.getParticipantCount() == 0) {
                         roomManager.closeRoom(roomName);
@@ -117,8 +120,8 @@ public class UDPBroadcastServer extends Thread {
             case "JOIN_ROOM":
                 if (roomName != null && roomManager.getRooms().containsKey(roomName)) {
                     Room room = roomManager.getRooms().get(roomName);
-                    if (!room.hasParticipant(username)) {
-                        room.addParticipant(new Participant(username));
+                    if (!room.hasParticipant(userId)) {
+                        room.addParticipant(new Participant(userId));
                         System.out.println("User " + username + " joined room: " + roomName);
                     } else {
                         System.out.println("User " + username + " is already in room: " + roomName);
@@ -129,7 +132,6 @@ public class UDPBroadcastServer extends Thread {
                 }
                 break;
             case "COMMENT":
-                String comment = parts.length > 3 ? parts[3] : null;
                 if (comment != null) {
                     broadcastComment(roomName, username, comment);
                 }
@@ -146,12 +148,13 @@ public class UDPBroadcastServer extends Thread {
             for (Room room : roomManager.getRooms().values()) {
                 roomList.append(room.getRoomName()).append("|")
                         .append(room.getOwner()).append("|")
-                        .append(room.getParticipantCount()).append(",");
+                        .append(room.getParticipantCount()).append("|")
+                        .append(room.getOwnerId()).append(",");
             }
             byte[] buffer = roomList.toString().getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, ServerConfig.BROADCAST_PORT);
             socket.send(packet);
-            System.out.println("Sent room list to " + address + ": " + roomList.toString()); // Log the room list
+            System.out.println("Sent room list to " + address + ": " + roomList.toString());
         } catch (Exception e) {
             e.printStackTrace();
         }

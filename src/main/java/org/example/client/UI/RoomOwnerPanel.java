@@ -71,7 +71,8 @@ public class RoomOwnerPanel extends JPanel {
         JPanel participantsPanel = new JPanel();
         participantsPanel.setOpaque(false);
         participantsPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-        ImageIcon originalIcon = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("group.png")));
+        ImageIcon originalIcon = new ImageIcon(
+                Objects.requireNonNull(getClass().getClassLoader().getResource("group.png")));
         Image scaledImage = originalIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
         ImageIcon scaledIcon = new ImageIcon(scaledImage);
         JLabel iconLabel = new JLabel(scaledIcon);
@@ -198,10 +199,30 @@ public class RoomOwnerPanel extends JPanel {
     private void shareScreen() {
         isScreenSharing = !isScreenSharing;
         if (isScreenSharing) {
-            // Add logic to start screen sharing
+            new Thread(() -> {
+                try {
+                    Robot robot = new Robot();
+                    Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
+                    while (isScreenSharing) {
+                        BufferedImage screenCapture = robot.createScreenCapture(screenRect);
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        ImageIO.write(screenCapture, "jpg", baos);
+                        byte[] imageBytes = baos.toByteArray();
+                        String encodedImage = Base64.getEncoder().encodeToString(imageBytes);
+                        if (client != null && client.isOpen()) {
+                            client.send(encodedImage);
+                        } else {
+                            System.out.println("WebSocket connection is not open.");
+                        }
+                        Thread.sleep(100);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }).start();
             System.out.println("Screen sharing started");
         } else {
-            // Add logic to stop screen sharing
+            isScreenSharing = false;
             System.out.println("Screen sharing stopped");
         }
     }
@@ -308,7 +329,7 @@ public class RoomOwnerPanel extends JPanel {
     private class CloseRoomActionListener implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
-            LivestreamClient.leaveRoom();
+            LivestreamClient.closeRoom();
             if (client != null) {
                 client.close();
             }

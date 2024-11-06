@@ -13,7 +13,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class MainPanel extends JPanel {
-    private JList<String> roomList;
     private JTable roomTable;
     private DefaultTableModel tableModel;
 
@@ -124,12 +123,12 @@ public class MainPanel extends JPanel {
     }
 
     public void updateRoomList(String roomListString) {
-        tableModel.setRowCount(0); // Clear existing rows
+        tableModel.setRowCount(0);
         String[] rooms = roomListString.split(",");
         for (String room : rooms) {
             if (!room.trim().isEmpty()) {
                 String[] roomDetails = room.split("\\|");
-                if (roomDetails.length == 3) {
+                if (roomDetails.length == 4) {
                     tableModel.addRow(roomDetails);
                 }
             }

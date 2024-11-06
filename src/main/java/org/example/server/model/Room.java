@@ -6,11 +6,13 @@ import java.util.List;
 public class Room {
     private String roomName;
     private String owner;
+    private String ownerId;
     private List<Participant> participants;
 
-    public Room(String roomName, String owner) {
+    public Room(String roomName, String owner, String ownerId) {
         this.roomName = roomName;
         this.owner = owner;
+        this.ownerId = ownerId;
         this.participants = new ArrayList<>();
     }
 
@@ -37,6 +39,10 @@ public class Room {
 
     public String getOwner() {
         return owner;
+    }
+
+    public String getOwnerId() {
+        return ownerId;
     }
 
     public List<Participant> getParticipants() {

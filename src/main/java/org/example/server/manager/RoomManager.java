@@ -17,9 +17,9 @@ public class RoomManager {
         this.videoStreamManager = new VideoStreamManager();
     }
 
-    public synchronized void createRoom(String roomName, String owner) {
+    public synchronized void createRoom(String roomName, String owner, String ownerId) {
         if (roomName != null && !roomName.trim().isEmpty() && !rooms.containsKey(roomName)) {
-            Room room = new Room(roomName, owner);
+            Room room = new Room(roomName, owner, ownerId);
             room.addParticipant(new Participant(owner));
             rooms.put(roomName, room);
             videoStreamManager.startStream(roomName, new VideoStreamTask(roomName));

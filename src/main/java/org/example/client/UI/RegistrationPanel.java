@@ -9,6 +9,7 @@ import org.example.client.UI.components.TextFieldUsername;
 import org.example.client.UI.components.UIUtils;
 import org.example.client.UI.components.Toaster.Toaster;
 import org.example.controller.UserController;
+import org.example.server.model.User;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -234,10 +235,11 @@ public class RegistrationPanel extends JPanel {
         }
 
         try {
-            userController.register(username, password);
+            User user = userController.register(username, password);
             String message = "REGISTER:" + username + ":" + password;
             if (LivestreamClient.sendBroadcastMessage(message)) {
-                LivestreamClient.setUsername(username);
+                LivestreamClient.setUsername(user.getUsername());
+                LivestreamClient.setUserId(String.valueOf(user.getId()));
                 LivestreamClient.showMainPanel();
             } else {
                 toaster.error("Register failed.");

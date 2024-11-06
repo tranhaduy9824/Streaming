@@ -20,6 +20,7 @@ import java.net.MulticastSocket;
 public class LivestreamClient {
     private static JFrame frame;
     private static String username;
+    private static String userId;
     private static String currentRoom;
     private static DefaultListModel<String> roomListModel = new DefaultListModel<>();
     private static LiveStreamPanel liveStreamPanel;
@@ -163,10 +164,10 @@ public class LivestreamClient {
             for (String room : rooms) {
                 if (!room.isEmpty()) {
                     String[] roomDetails = room.split("\\|");
-                    if (roomDetails.length == 3) {
+                    if (roomDetails.length == 4) {
                         String roomName = roomDetails[0];
                         String owner = roomDetails[1];
-                        String participantCount = roomDetails[2];
+                        String participantCount = roomDetails[3];
                         roomListModel.addElement(
                                 roomName + " (Owner: " + owner + ", Participants: " + participantCount + ")");
 
@@ -202,20 +203,28 @@ public class LivestreamClient {
     public static void joinRoom(String roomName) {
         currentRoom = roomName;
         System.out.println("Attempting to join room: " + roomName);
-        sendBroadcastMessage("JOIN_ROOM:" + username + ":" + roomName);
+        sendBroadcastMessage("JOIN_ROOM:" + username + ":" + userId + ":" + roomName);
         checkRoomOwnerAfterUpdate = true;
+    }
+
+    public static void closeRoom() {
+        if (currentRoom != null) {
+            sendBroadcastMessage("CLOSE_ROOM:" + username + ":" + userId + ":" + currentRoom);
+            currentRoom = null;
+            showMainPanel();
+        }
     }
 
     public static void leaveRoom() {
         if (currentRoom != null) {
-            sendBroadcastMessage("LEAVE_ROOM:" + username + ":" + currentRoom);
+            sendBroadcastMessage("LEAVE_ROOM:" + username + ":" + userId + ":" + currentRoom);
             currentRoom = null;
             showMainPanel();
         }
     }
 
     public static void createRoom(String roomName) {
-        String message = "CREATE_ROOM:" + username + ":" + roomName;
+        String message = "CREATE_ROOM:" + username + ":" + userId + ":" + roomName;
         if (sendBroadcastMessage(message)) {
             System.out.println("Create room request sent successfully for room: " + roomName);
             currentRoom = roomName;
@@ -227,7 +236,7 @@ public class LivestreamClient {
 
     public static void sendComment(String comment) {
         if (currentRoom != null) {
-            String message = "COMMENT:" + username + ":" + comment + ":" + currentRoom;
+            String message = "COMMENT:" + username + ":" + userId + ":" + comment + ":" + currentRoom;
             sendBroadcastMessage(message);
         }
     }
@@ -238,6 +247,10 @@ public class LivestreamClient {
 
     public static void setUsername(String username) {
         LivestreamClient.username = username;
+    }
+
+    public static void setUserId(String userId) {
+        LivestreamClient.userId = userId;
     }
 
     public static DefaultListModel<String> getRoomListModel() {
