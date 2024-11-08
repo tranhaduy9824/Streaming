@@ -33,6 +33,7 @@ public class UserManager {
 
     public synchronized boolean loginUser(String username, String password) {
         try {
+            System.out.println("User logged in: " + username + password);
             User user = userDAO.getUserByUsername(username);
             if (user != null && user.getPassword().equals(password)) {
                 users.put(username, user);
@@ -51,5 +52,14 @@ public class UserManager {
 
     public synchronized User getUser(String username) {
         return users.get(username);
+    }
+
+    public synchronized User getUserById(int id) {
+        for (User user : users.values()) {
+            if (user.getId() == id) {
+                return user;
+            }
+        }
+        return null;
     }
 }

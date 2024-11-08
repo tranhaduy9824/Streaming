@@ -1,16 +1,21 @@
 package org.example.server.model;
 
-public class Participant {
+import java.sql.Timestamp;
+
+public class Comment {
     private int id;
     private int roomId;
     private int userId;
+    private String comment;
+    private Timestamp timestamp;
 
-    public Participant() {
+    public Comment() {
     }
 
-    public Participant(int roomId, int userId) {
+    public Comment(int roomId, int userId, String comment) {
         this.roomId = roomId;
         this.userId = userId;
+        this.comment = comment;
     }
 
     public int getId() {
@@ -35,5 +40,21 @@ public class Participant {
 
     public void setUserId(int userId) {
         this.userId = userId;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
+    public Timestamp getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Timestamp timestamp) {
+        this.timestamp = timestamp;
     }
 }

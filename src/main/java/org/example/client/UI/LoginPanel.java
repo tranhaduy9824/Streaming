@@ -199,10 +199,10 @@ public class LoginPanel extends JPanel {
         try {
             User user = userController.login(username, password);
             if (user != null) {
-                String message = "LOGIN:" + username;
+                String message = "LOGIN:" + username + ":" + password;
                 if (LivestreamClient.sendBroadcastMessage(message)) {
-                    System.out.println("Sent login request for username: " + username);
                     LivestreamClient.setUsername(username);
+                    LivestreamClient.setUserId(String.valueOf(user.getId()));
                     LivestreamClient.showMainPanel();
                 } else {
                     toaster.error("Login failed");
