@@ -43,6 +43,8 @@ public class RoomOwnerPanel extends JPanel {
     private boolean isScreenSharing = false;
     private TargetDataLine microphone;
     private AudioFormat audioFormat;
+    private boolean running = true;
+    private JPanel screenSharePanel;
 
     public RoomOwnerPanel() {
         setLayout(new BorderLayout());
@@ -67,6 +69,20 @@ public class RoomOwnerPanel extends JPanel {
         videoPanel.setPreferredSize(new Dimension(640, 480));
         videoPanel.setBackground(UIUtils.COLOR_BACKGROUND);
         add(videoPanel, BorderLayout.WEST);
+
+        screenSharePanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (currentImage != null) {
+                    g.drawImage(currentImage, 0, 0, getWidth(), getHeight(), null);
+                }
+            }
+        };
+        screenSharePanel.setPreferredSize(new Dimension(640, 480));
+        screenSharePanel.setBackground(UIUtils.COLOR_BACKGROUND);
+        screenSharePanel.setVisible(false);
+        add(screenSharePanel, BorderLayout.EAST);
 
         JPanel participantsPanel = new JPanel();
         participantsPanel.setOpaque(false);
@@ -174,7 +190,7 @@ public class RoomOwnerPanel extends JPanel {
                     microphone.start();
                     new Thread(() -> {
                         byte[] buffer = new byte[4096];
-                        while (isMicOn) {
+                        while (isMicOn && running) {
                             int bytesRead = microphone.read(buffer, 0, buffer.length);
                             if (bytesRead > 0 && client != null && client.isOpen()) {
                                 client.send(buffer);
@@ -203,7 +219,7 @@ public class RoomOwnerPanel extends JPanel {
                 try {
                     Robot robot = new Robot();
                     Rectangle screenRect = new Rectangle(Toolkit.getDefaultToolkit().getScreenSize());
-                    while (isScreenSharing) {
+                    while (isScreenSharing && running) {
                         BufferedImage screenCapture = robot.createScreenCapture(screenRect);
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         ImageIO.write(screenCapture, "jpg", baos);
@@ -287,7 +303,7 @@ public class RoomOwnerPanel extends JPanel {
                 grabber = new VideoInputFrameGrabber(1);
                 grabber.start();
                 converter = new Java2DFrameConverter();
-                while (true) {
+                while (running) {
                     try {
                         Frame frame = grabber.grab();
                         if (frame != null) {
@@ -312,6 +328,24 @@ public class RoomOwnerPanel extends JPanel {
                 e.printStackTrace();
             }
         }).start();
+    }
+
+    public void stopAllStreams() {
+        running = false;
+        if (grabber != null) {
+            try {
+                grabber.stop();
+            } catch (FrameGrabber.Exception e) {
+                e.printStackTrace();
+            }
+            grabber = null;
+        }
+        if (microphone != null) {
+            microphone.stop();
+            microphone.close();
+            microphone = null;
+        }
+        isScreenSharing = false;
     }
 
     private class SendCommentActionListener implements ActionListener {

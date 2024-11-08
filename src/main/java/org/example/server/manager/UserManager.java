@@ -53,4 +53,13 @@ public class UserManager {
     public synchronized User getUser(String username) {
         return users.get(username);
     }
+
+    public synchronized User getUserById(int id) {
+        for (User user : users.values()) {
+            if (user.getId() == id) {
+                return user;
+            }
+        }
+        return null;
+    }
 }

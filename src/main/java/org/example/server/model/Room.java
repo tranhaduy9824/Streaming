@@ -1,48 +1,50 @@
 package org.example.server.model;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Room {
+    private int id;
     private String roomName;
-    private String owner;
-    private String ownerId;
+    private int ownerId;
     private List<Participant> participants;
+    private Timestamp startTime;
+    private Timestamp endTime;
 
-    public Room(String roomName, String owner, String ownerId) {
-        this.roomName = roomName;
-        this.owner = owner;
-        this.ownerId = ownerId;
+    public Room() {
         this.participants = new ArrayList<>();
     }
 
-    public void addParticipant(Participant participant) {
-        participants.add(participant);
+    public Room(String roomName, int ownerId) {
+        this.roomName = roomName;
+        this.ownerId = ownerId;
+        this.participants = new ArrayList<>();
+        this.startTime = new Timestamp(System.currentTimeMillis());
     }
 
-    public void removeParticipant(String username) {
-        participants.removeIf(participant -> participant.getUsername().equals(username));
+    public int getId() {
+        return id;
     }
 
-    public boolean hasParticipant(String username) {
-        for (Participant participant : participants) {
-            if (participant.getUsername().equals(username)) {
-                return true;
-            }
-        }
-        return false;
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getRoomName() {
         return roomName;
     }
 
-    public String getOwner() {
-        return owner;
+    public void setRoomName(String roomName) {
+        this.roomName = roomName;
     }
 
-    public String getOwnerId() {
+    public int getOwnerId() {
         return ownerId;
+    }
+
+    public void setOwnerId(int ownerId) {
+        this.ownerId = ownerId;
     }
 
     public List<Participant> getParticipants() {
@@ -51,5 +53,33 @@ public class Room {
 
     public int getParticipantCount() {
         return participants.size();
+    }
+
+    public void addParticipant(Participant participant) {
+        participants.add(participant);
+    }
+
+    public void removeParticipant(int userId) {
+        participants.removeIf(participant -> participant.getUserId() == userId);
+    }
+
+    public boolean hasParticipant(int userId) {
+        return participants.stream().anyMatch(participant -> participant.getUserId() == userId);
+    }
+
+    public Timestamp getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(Timestamp startTime) {
+        this.startTime = startTime;
+    }
+
+    public Timestamp getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(Timestamp endTime) {
+        this.endTime = endTime;
     }
 }

@@ -4,9 +4,13 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.sql.SQLException;
+
 import org.example.config.ServerConfig;
+import org.example.dao.CommentDAO;
 import org.example.server.manager.RoomManager;
 import org.example.server.manager.UserManager;
+import org.example.server.model.Comment;
 import org.example.server.model.Participant;
 import org.example.server.model.Room;
 
@@ -87,32 +91,32 @@ public class UDPBroadcastServer extends Thread {
                 if (roomName == null || roomName.trim().isEmpty()) {
                     System.out.println("Invalid room name: " + roomName);
                 } else {
-                    roomManager.createRoom(roomName, username, userId);
-                    sendRoomList(address);
+                    roomManager.createRoom(roomName, username, Integer.parseInt(userId));
                 }
+                sendRoomList(address);
                 break;
             case "CLOSE_ROOM":
                 if (roomManager.getRooms().containsKey(roomName)) {
                     multicastRoomClosure(roomName);
                     roomManager.closeRoom(roomName);
                     System.out.println("Room closed: " + roomName);
-                    sendRoomList(address);
                 } else {
                     System.out.println("Room not found: " + roomName);
                 }
+                sendRoomList(address);
                 break;
             case "LEAVE_ROOM":
                 if (roomName != null && roomManager.getRooms().containsKey(roomName)) {
                     Room room = roomManager.getRooms().get(roomName);
-                    room.removeParticipant(userId);
+                    room.removeParticipant(Integer.parseInt(userId));
                     System.out.println("User " + username + " left room: " + roomName);
-                    if (room.getParticipantCount() == 0) {
+                    if (room.getParticipants().isEmpty()) {
                         roomManager.closeRoom(roomName);
                     }
-                    sendRoomList(address);
                 } else {
                     System.out.println("Room not found: " + roomName);
                 }
+                sendRoomList(address);
                 break;
             case "LIST_ROOMS":
                 sendRoomList(address);
@@ -120,20 +124,34 @@ public class UDPBroadcastServer extends Thread {
             case "JOIN_ROOM":
                 if (roomName != null && roomManager.getRooms().containsKey(roomName)) {
                     Room room = roomManager.getRooms().get(roomName);
-                    if (!room.hasParticipant(userId)) {
-                        room.addParticipant(new Participant(userId));
+                    if (!room.hasParticipant(Integer.parseInt(userId))) {
+                        room.addParticipant(new Participant(room.getId(), Integer.parseInt(userId)));
                         System.out.println("User " + username + " joined room: " + roomName);
                     } else {
                         System.out.println("User " + username + " is already in room: " + roomName);
                     }
-                    sendRoomList(address);
                 } else {
                     System.out.println("Room not found: " + roomName);
                 }
+                sendRoomList(address);
                 break;
             case "COMMENT":
-                if (comment != null) {
-                    broadcastComment(roomName, username, comment);
+                if (comment != null && roomName != null && userId != null) {
+                    try {
+                        Room room = roomManager.getRoomByName(roomName);
+                        if (room != null) {
+                            int roomId = room.getId();
+                            int userIdInt = Integer.parseInt(userId);
+                            Comment commentObj = new Comment(roomId, userIdInt, comment);
+                            CommentDAO commentDAO = new CommentDAO();
+                            commentDAO.addComment(commentObj);
+                            broadcastComment(roomName, username, comment);
+                        } else {
+                            System.out.println("Room not found: " + roomName);
+                        }
+                    } catch (NumberFormatException | SQLException e) {
+                        e.printStackTrace();
+                    }
                 }
                 break;
             default:
@@ -146,8 +164,10 @@ public class UDPBroadcastServer extends Thread {
             InetAddress group = InetAddress.getByName(ServerConfig.BROADCAST_ADDRESS);
             StringBuilder roomList = new StringBuilder("ROOM_LIST:");
             for (Room room : roomManager.getRooms().values()) {
+                String ownerId = String.valueOf(room.getOwnerId());
+                String ownerName = userManager.getUserById(Integer.parseInt(ownerId)).getUsername();
                 roomList.append(room.getRoomName()).append("|")
-                        .append(room.getOwner()).append("|")
+                        .append(ownerName).append("|")
                         .append(room.getParticipantCount()).append("|")
                         .append(room.getOwnerId()).append(",");
             }
@@ -163,17 +183,14 @@ public class UDPBroadcastServer extends Thread {
     private void broadcastComment(String roomName, String username, String comment) {
         Room room = roomManager.getRooms().get(roomName);
         if (room != null) {
-            for (Participant participant : room.getParticipants()) {
-                try (DatagramSocket socket = new DatagramSocket()) {
-                    InetAddress group = InetAddress.getByName(ServerConfig.BROADCAST_ADDRESS);
-                    String message = "COMMENT:" + username + ":" + comment;
-                    byte[] buffer = message.getBytes();
-                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group,
-                            ServerConfig.BROADCAST_PORT);
-                    socket.send(packet);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            try (DatagramSocket socket = new DatagramSocket()) {
+                InetAddress group = InetAddress.getByName(ServerConfig.BROADCAST_ADDRESS);
+                String message = "COMMENT:" + username + ":" + comment + ":" + roomName + ":server";
+                byte[] buffer = message.getBytes();
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, ServerConfig.BROADCAST_PORT);
+                socket.send(packet);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
@@ -191,7 +208,9 @@ public class UDPBroadcastServer extends Thread {
                             ServerConfig.BROADCAST_PORT);
                     socket.send(packet);
                     System.out.println(
-                            "Sent room closed message to " + participant.getUsername() + " for room: " + roomName);
+                            "Sent room closed message to "
+                                    + userManager.getUserById(participant.getUserId()).getUsername() + " for room: "
+                                    + roomName);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

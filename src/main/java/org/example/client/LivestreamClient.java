@@ -28,6 +28,7 @@ public class LivestreamClient {
     private static RoomParticipantPanel roomParticipantPanel;
     private static boolean checkRoomOwnerAfterUpdate = false;
     private static Toaster toaster;
+    private static MainPanel mainPanel;
 
     public static void main(String[] args) {
         frame = new JFrame("Livestream Application");
@@ -59,9 +60,11 @@ public class LivestreamClient {
 
     public static void showMainPanel() {
         frame.getContentPane().removeAll();
-        frame.add(new MainPanel(), BorderLayout.CENTER);
+        mainPanel = new MainPanel();
+        frame.add(mainPanel, BorderLayout.CENTER);
         frame.revalidate();
         frame.repaint();
+        toaster = new Toaster(mainPanel);
     }
 
     public static void showLiveStreamPanel() {
@@ -78,6 +81,7 @@ public class LivestreamClient {
         frame.add(roomOwnerPanel, BorderLayout.CENTER);
         frame.revalidate();
         frame.repaint();
+        toaster = new Toaster(roomOwnerPanel);
     }
 
     public static void showRoomParticipantPanel() {
@@ -86,6 +90,7 @@ public class LivestreamClient {
         frame.add(roomParticipantPanel, BorderLayout.CENTER);
         frame.revalidate();
         frame.repaint();
+        toaster = new Toaster(roomParticipantPanel);
     }
 
     public static boolean sendBroadcastMessage(String message) {
@@ -116,23 +121,29 @@ public class LivestreamClient {
                     updateRoomList(message.substring(10));
                 } else if (message.startsWith("COMMENT:")) {
                     String[] parts = message.split(":");
-                    String sender = parts[1];
-                    String comment = parts[2];
-                    boolean isOwner = sender.equals(getRoomOwner(currentRoom));
-                    if (!sender.equals(username) && currentRoom != null && currentRoom.equals(parts[3])) {
-                        comment = sender + ": " + comment;
-                        if (liveStreamPanel != null) {
-                            liveStreamPanel.addComment(comment, isOwner);
-                        } else if (roomOwnerPanel != null) {
-                            roomOwnerPanel.addComment(comment, isOwner);
-                        } else if (roomParticipantPanel != null) {
-                            roomParticipantPanel.addComment(comment, isOwner);
+                    if (parts.length == 5) {
+                        String sender = parts[1];
+                        String comment = parts[2];
+                        boolean isOwner = sender.equals(getRoomOwner(currentRoom));
+                        if (!sender.equals(username) && currentRoom != null && currentRoom.equals(parts[3])) {
+                            comment = sender + ": " + comment;
+                            if (liveStreamPanel != null) {
+                                liveStreamPanel.addComment(comment, isOwner);
+                            } else if (roomOwnerPanel != null) {
+                                roomOwnerPanel.addComment(comment, isOwner);
+
+                            } else if (roomParticipantPanel != null) {
+                                roomParticipantPanel.addComment(comment, isOwner);
+                            }
                         }
                     }
                 } else if (message.startsWith("ROOM_CLOSED:")) {
                     String roomName = message.split(":")[1];
+                    System.out.println("Received room closed message for room á hahaahhaha: " + roomName);
                     if (currentRoom != null && currentRoom.equals(roomName)) {
                         toaster.success("The room has been closed by the owner.");
+                        JOptionPane.showMessageDialog(frame, "The room has been closed by the owner.", "Room Closed",
+                                JOptionPane.INFORMATION_MESSAGE);
                         leaveRoom();
                     }
                 }
@@ -212,6 +223,9 @@ public class LivestreamClient {
             sendBroadcastMessage("CLOSE_ROOM:" + username + ":" + userId + ":" + currentRoom);
             currentRoom = null;
             showMainPanel();
+            if (roomOwnerPanel != null) {
+                roomOwnerPanel.stopAllStreams();
+            }
         }
     }
 
@@ -236,7 +250,7 @@ public class LivestreamClient {
 
     public static void sendComment(String comment) {
         if (currentRoom != null) {
-            String message = "COMMENT:" + username + ":" + userId + ":" + comment + ":" + currentRoom;
+            String message = "COMMENT:" + username + ":" + userId + ":" + currentRoom + ":" + comment;
             sendBroadcastMessage(message);
         }
     }
