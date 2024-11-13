@@ -233,6 +233,9 @@ public class RoomOwnerPanel extends JPanel {
                     e.printStackTrace();
                 }
             }).start();
+            if (client != null && client.isOpen()) {
+                client.send("SCREEN_SHARE_START");
+            }
             System.out.println("Screen sharing started");
         } else {
             isScreenSharing = false;
@@ -242,6 +245,9 @@ public class RoomOwnerPanel extends JPanel {
             layeredPane.setLayer(screenSharePanel, JLayeredPane.PALETTE_LAYER);
             videoPanel.add(controlPanel, BorderLayout.SOUTH);
             screenSharePanel.repaint();
+            if (client != null && client.isOpen()) {
+                client.send("SCREEN_SHARE_STOP");
+            }
             System.out.println("Screen sharing stopped");
         }
     }
