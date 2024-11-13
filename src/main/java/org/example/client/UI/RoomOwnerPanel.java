@@ -121,7 +121,8 @@ public class RoomOwnerPanel extends JPanel {
         participantsLabel.setFont(UIUtils.FONT_GENERAL_UI);
         participantsPanel.add(iconLabel);
         participantsPanel.add(participantsLabel);
-        videoPanel.add(participantsPanel, BorderLayout.NORTH);
+        participantsPanel.setBounds(650, 60, 150, 40);
+        layeredPane.add(participantsPanel, JLayeredPane.DRAG_LAYER);
 
         controlPanel = new JPanel();
         controlPanel.setBackground(UIUtils.COLOR_BACKGROUND);
@@ -325,6 +326,7 @@ public class RoomOwnerPanel extends JPanel {
 
     public void updateParticipantsCount(int count) {
         participantsLabel.setText(String.valueOf(count));
+        participantsLabel.repaint();
     }
 
     private void styleButton(JButton button) {

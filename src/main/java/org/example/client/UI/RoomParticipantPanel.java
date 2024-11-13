@@ -37,6 +37,8 @@ public class RoomParticipantPanel extends JPanel {
     private boolean isScreenSharing;
 
     public RoomParticipantPanel() {
+        Integer participantCount = LivestreamClient.getParticipantCounts();
+
         setLayout(new BorderLayout());
         setBackground(UIUtils.COLOR_BACKGROUND);
 
@@ -103,12 +105,13 @@ public class RoomParticipantPanel extends JPanel {
         Image scaledImage = originalIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
         ImageIcon scaledIcon = new ImageIcon(scaledImage);
         JLabel iconLabel = new JLabel(scaledIcon);
-        participantsLabel = new JLabel("0");
+        participantsLabel = new JLabel(participantCount != null ? participantCount.toString() : "0");
         participantsLabel.setForeground(UIUtils.OFFWHITE);
         participantsLabel.setFont(UIUtils.FONT_GENERAL_UI);
         participantsPanel.add(iconLabel);
         participantsPanel.add(participantsLabel);
-        videoPanel.add(participantsPanel, BorderLayout.NORTH);
+        participantsPanel.setBounds(650, 60, 150, 40);
+        layeredPane.add(participantsPanel, JLayeredPane.DRAG_LAYER);
 
         controlPanel = new JPanel();
         controlPanel.setBackground(UIUtils.COLOR_BACKGROUND);

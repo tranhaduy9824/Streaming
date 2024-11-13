@@ -29,6 +29,7 @@ public class LivestreamClient {
     private static boolean checkRoomOwnerAfterUpdate = false;
     private static Toaster toaster;
     private static MainPanel mainPanel;
+    private static Integer participantCounts;
 
     public static void main(String[] args) {
         frame = new JFrame("Livestream Application");
@@ -178,16 +179,21 @@ public class LivestreamClient {
                     if (roomDetails.length == 4) {
                         String roomName = roomDetails[0];
                         String owner = roomDetails[1];
-                        String participantCount = roomDetails[3];
+                        String participantCount = roomDetails[2];
+                        System.out.println(participantCount);
                         roomListModel.addElement(
                                 roomName + " (Owner: " + owner + ", Participants: " + participantCount + ")");
 
-                        if (currentRoom != null && currentRoom.equals(roomName) && roomOwnerPanel != null) {
-                            roomOwnerPanel.updateParticipantsCount(Integer.parseInt(participantCount));
-                        } else if (currentRoom != null && currentRoom.equals(roomName)
-                                && roomParticipantPanel != null) {
-                            roomParticipantPanel.updateParticipantsCount(Integer.parseInt(participantCount));
-                        }
+                                if (currentRoom != null && currentRoom.equals(roomName) && roomOwnerPanel != null) {
+                                    roomOwnerPanel.updateParticipantsCount(Integer.parseInt(participantCount));
+                                } else if (currentRoom != null && currentRoom.equals(roomName) && roomParticipantPanel != null) {
+                                    participantCounts = Integer.parseInt(participantCount);
+                                    roomParticipantPanel.updateParticipantsCount(Integer.parseInt(participantCount));
+                                } else {
+                                    System.out.println("Condition not met for participant counts update: " +
+                                            "currentRoom=" + currentRoom + ", roomName=" + roomName +
+                                            ", roomParticipantPanel=" + roomParticipantPanel);
+                                }
                     } else {
                         System.err.println("Invalid room details: " + room);
                     }
@@ -216,6 +222,7 @@ public class LivestreamClient {
         System.out.println("Attempting to join room: " + roomName);
         sendBroadcastMessage("JOIN_ROOM:" + username + ":" + userId + ":" + roomName);
         checkRoomOwnerAfterUpdate = true;
+        showRoomParticipantPanel();
     }
 
     public static void closeRoom() {
@@ -286,5 +293,9 @@ public class LivestreamClient {
         }
         System.out.println("User is not the owner of the room: " + roomName);
         return false;
+    }
+
+    public static Integer getParticipantCounts() {
+        return participantCounts;
     }
 }
