@@ -1,16 +1,15 @@
 package org.example.client.UI;
 
-import javax.swing.*;
-
 import org.example.client.LivestreamClient;
 import org.example.client.UI.components.HyperlinkText;
 import org.example.client.UI.components.TextFieldPassword;
 import org.example.client.UI.components.TextFieldUsername;
-import org.example.client.UI.components.UIUtils;
 import org.example.client.UI.components.Toaster.Toaster;
+import org.example.client.UI.components.UIUtils;
 import org.example.controller.UserController;
 import org.example.server.model.User;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.SQLException;
@@ -24,31 +23,27 @@ public class LoginPanel extends JPanel {
     private UserController userController = new UserController();
 
     public LoginPanel() {
-        setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        setLayout(null); // Absolute layout
+        setPreferredSize(new Dimension(800, 500));
 
-        JPanel mainJPanel = getMainJPanel();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        add(mainJPanel, gbc);
+        setBackground(new Color(255, 214, 214));
 
-        addLogo(mainJPanel);
-        addSeparator(mainJPanel);
-        addUsernameTextField(mainJPanel);
-        addPasswordTextField(mainJPanel);
-        addLoginButton(mainJPanel);
-        addRegisterButton(mainJPanel);
+        // Add components
+        addLogo();
+        addLoginLabel();
+        addUsernameTextField();
+        addPasswordTextField();
+        addLoginButton();
+        addRegisterLink();
 
-        toaster = new Toaster(mainJPanel);
-        this.setPreferredSize(new Dimension(800, 450));
+        // Initialize toaster
+        toaster = new Toaster(this);
     }
 
     private JPanel getMainJPanel() {
         JPanel panel = new JPanel();
-        panel.setPreferredSize(new Dimension(800, 450));
-        panel.setBackground(UIUtils.COLOR_BACKGROUND);
+        panel.setPreferredSize(new Dimension(800, 500));
+        panel.setBackground(UIUtils.COLOR_BACKGROUND_LOGIN);
         panel.setLayout(null);
 
         MouseAdapter ma = new MouseAdapter() {
@@ -77,96 +72,69 @@ public class LoginPanel extends JPanel {
         return panel;
     }
 
-    private void addLogo(JPanel panel) {
-        JLabel label = new JLabel();
-        label.setFocusable(false);
+    private void addLogo() {
+        JPanel leftPanel = new JPanel();
+        leftPanel.setBackground(new Color(255, 214, 214));
+        leftPanel.setBounds(0, 0, 350, 500);
+        leftPanel.setLayout(null);
 
-        ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("login.jpg")));
-        Image scaledImage = icon.getImage().getScaledInstance(250, 250, Image.SCALE_SMOOTH);
-        label.setIcon(new ImageIcon(scaledImage));
+        JLabel logoLabel = new JLabel();
+        try {
+            ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/1.png")));
+            Image scaledImage = icon.getImage().getScaledInstance(340, 500, Image.SCALE_SMOOTH);
+            logoLabel.setIcon(new ImageIcon(scaledImage));
+        } catch (NullPointerException e) {
+            System.err.println("Error: Logo file not found!");
+        }
+        logoLabel.setBounds(0, 0, 340, 500);
+        leftPanel.add(logoLabel);
 
-        label.setBounds(40, 90, 250, 250);
-        panel.add(label);
+        add(leftPanel);
     }
 
-    private void addSeparator(JPanel panel) {
-        JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
-        separator.setForeground(UIUtils.COLOR_OUTLINE);
-        separator.setBounds(340, 80, 1, 290);
-        panel.add(separator);
+    private void addLoginLabel() {
+        JLabel loginLabel = new JLabel("LOGIN");
+        loginLabel.setFont(new Font("Segoe UI Black", Font.BOLD, 36));
+        loginLabel.setForeground(new Color(0, 135, 255));
+        loginLabel.setBounds(490, 30, 300, 50);
+        add(loginLabel);
     }
 
-    private void addUsernameTextField(JPanel panel) {
+
+    private void addUsernameTextField() {
+        JLabel usernameLabel = new JLabel("Username");
+        usernameLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        usernameLabel.setBounds(420, 110, 300, 20);
+        add(usernameLabel);
+
         usernameField = new TextFieldUsername();
-        usernameField.setBounds(420, 110, 250, 44);
-
-        usernameField.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if (usernameField.getText().equals(UIUtils.PLACEHOLDER_TEXT_USERNAME)) {
-                    usernameField.setText("");
-                }
-                usernameField.setForeground(Color.white);
-                usernameField.setBorderColor(UIUtils.COLOR_INTERACTIVE);
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (usernameField.getText().isEmpty()) {
-                    usernameField.setText(UIUtils.PLACEHOLDER_TEXT_USERNAME);
-                }
-                usernameField.setForeground(UIUtils.COLOR_OUTLINE);
-                usernameField.setBorderColor(UIUtils.COLOR_OUTLINE);
-            }
-        });
-        panel.add(usernameField);
+        usernameField.setFont(new Font("Arial", Font.PLAIN, 14));
+        usernameField.setBounds(420, 140, 250, 30);
+        add(usernameField);
     }
 
-    private void addPasswordTextField(JPanel panel) {
+    private void addPasswordTextField() {
+        JLabel passwordLabel = new JLabel("Password");
+        passwordLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        passwordLabel.setBounds(420, 180, 300, 20);
+        add(passwordLabel);
+
         passwordField = new TextFieldPassword();
-        passwordField.setBounds(420, 170, 250, 44);
-
-        passwordField.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                passwordField.setForeground(Color.white);
-                passwordField.setBorderColor(UIUtils.COLOR_INTERACTIVE);
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                passwordField.setForeground(UIUtils.COLOR_OUTLINE);
-                passwordField.setBorderColor(UIUtils.COLOR_OUTLINE);
-            }
-        });
-
-        passwordField.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-                if (e.getKeyChar() == KeyEvent.VK_ENTER)
-                    loginEventHandler();
-            }
-        });
-        panel.add(passwordField);
+        passwordField.setFont(new Font("Arial", Font.PLAIN, 14));
+        passwordField.setBounds(420, 210, 250, 30);
+        add(passwordField);
     }
 
-    private void addLoginButton(JPanel panel) {
-        JLabel loginButton = new JLabel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g;
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(UIUtils.COLOR_INTERACTIVE);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), UIUtils.ROUNDNESS, UIUtils.ROUNDNESS);
-                g2.setColor(Color.white);
-                g2.setFont(UIUtils.FONT_GENERAL_UI);
-                g2.drawString(UIUtils.BUTTON_TEXT_LOGIN, getWidth() / 2 - 30, getHeight() / 2 + 5);
-            }
-        };
+    private void addLoginButton() {
+        JButton loginButton = new JButton("Login");
+        loginButton.setBounds(420, 260, 250, 40);
+        loginButton.setBackground(new Color(255, 102, 102));
+        loginButton.setForeground(Color.WHITE);
+        loginButton.setFocusPainted(false);
+        loginButton.setFont(new Font("Arial", Font.BOLD, 14));
+        loginButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        loginButton.setBounds(420, 250, 250, 44);
-        loginButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
         loginButton.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -180,15 +148,38 @@ public class LoginPanel extends JPanel {
 
             @Override
             public void mouseExited(MouseEvent e) {
-                loginButton.setBackground(UIUtils.COLOR_INTERACTIVE);
+                loginButton.setBackground(UIUtils.COLOR_BTN_LOGIN);
             }
         });
 
-        panel.add(loginButton);
+        add(loginButton);
+    }
+    private void addRegisterLink() {
+        JLabel registerLabel = new JLabel("I don't have an account");
+        registerLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        registerLabel.setBounds(420, 310, 150, 30);
+        add(registerLabel);
+
+        JButton signUpButton = new JButton("Sign Up");
+        signUpButton.setBounds(580, 310, 90, 30);
+        signUpButton.setBackground(new Color(255, 255, 255));
+        signUpButton.setForeground(new Color(255,153,0));
+        signUpButton.setFocusPainted(false);
+        signUpButton.setFont(new Font("Arial", Font.BOLD, 12));
+        signUpButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+//        signUpButton.addActionListener(e -> addRegisterButton());
+        signUpButton.addActionListener(e -> {
+            LivestreamClient.showRegistrationPanel();
+        });
+
+
+        add(signUpButton);
     }
 
-    private void addRegisterButton(JPanel panel) {
-        panel.add(new HyperlinkText(UIUtils.BUTTON_TEXT_REGISTER, 625, 320, () -> {
+    private void addRegisterButton() {
+        System.out.println("Sign Up button clicked");
+        add(new HyperlinkText(UIUtils.BUTTON_TEXT_REGISTER, 625, 320, () -> {
             LivestreamClient.showRegistrationPanel();
         }));
     }
@@ -196,10 +187,18 @@ public class LoginPanel extends JPanel {
     private void loginEventHandler() {
         String username = usernameField.getText();
         String password = new String(passwordField.getPassword());
+
+        // Check if the username or password is empty
+        if (username.isEmpty() || password.isEmpty()) {
+            toaster.error("Username or Password cannot be empty");
+            return; // Prevent login attempt if either field is empty
+        }
+
         try {
             User user = userController.login(username, password);
             if (user != null) {
                 String message = "LOGIN:" + username + ":" + password;
+                System.out.println("Sending login message: " + message);
                 if (LivestreamClient.sendBroadcastMessage(message)) {
                     LivestreamClient.setUsername(username);
                     LivestreamClient.setUserId(String.valueOf(user.getId()));
@@ -215,4 +214,5 @@ public class LoginPanel extends JPanel {
             toaster.error("An error occurred while logging in");
         }
     }
+
 }

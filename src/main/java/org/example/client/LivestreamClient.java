@@ -205,7 +205,8 @@ public class LivestreamClient {
 
                         if (currentRoom != null && currentRoom.equals(roomName) && roomOwnerPanel != null) {
                             roomOwnerPanel.updateParticipantsCount(Integer.parseInt(participantCount));
-                        } else if (currentRoom != null && currentRoom.equals(roomName) && roomParticipantPanel != null) {
+                        } else if (currentRoom != null && currentRoom.equals(roomName)
+                                && roomParticipantPanel != null) {
                             participantCounts = Integer.parseInt(participantCount);
                             roomParticipantPanel.updateParticipantsCount(Integer.parseInt(participantCount));
                         } else {

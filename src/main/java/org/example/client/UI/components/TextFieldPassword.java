@@ -7,17 +7,19 @@ import java.awt.geom.RoundRectangle2D;
 
 public class TextFieldPassword extends JPasswordField {
     private Shape shape;
-    private Color borderColor = UIUtils.COLOR_OUTLINE;
+    private Color borderColor = UIUtils.COLOR_BACKGROUND_REGISTER;
 
     public TextFieldPassword() {
         setOpaque(false);
-        setBackground(UIUtils.COLOR_BACKGROUND);
-        setForeground(Color.white);
+        setBackground(Color.white);
+        setForeground(Color.black);
         setCaretColor(Color.white);
         setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
         setMargin(new Insets(2, 10, 2, 2));
         setHorizontalAlignment(SwingConstants.LEFT);
-        setFont(UIUtils.FONT_GENERAL_UI);
+//        setFont(UIUtils.FONT_GENERAL_UI);
+        setFont(new Font("Arial",Font.PLAIN,14));
+        setBounds(420,140,250,30);
     }
 
     protected void paintComponent(Graphics g) {
