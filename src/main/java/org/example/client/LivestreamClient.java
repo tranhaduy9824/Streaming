@@ -8,6 +8,7 @@ import org.example.client.UI.RoomOwnerPanel;
 import org.example.client.UI.RoomParticipantPanel;
 import org.example.client.UI.components.Toaster.Toaster;
 import org.example.config.ClientConfig;
+import org.example.server.model.Room;
 
 import javax.swing.*;
 import java.awt.*;
@@ -120,27 +121,9 @@ public class LivestreamClient {
                 System.out.println("Received broadcast message: " + message);
                 if (message.startsWith("ROOM_LIST:")) {
                     updateRoomList(message.substring(10));
-                } else if (message.startsWith("COMMENT:")) {
-                    String[] parts = message.split(":");
-                    if (parts.length == 5) {
-                        String sender = parts[1];
-                        String comment = parts[2];
-                        boolean isOwner = sender.equals(getRoomOwner(currentRoom));
-                        if (!sender.equals(username) && currentRoom != null && currentRoom.equals(parts[3])) {
-                            comment = sender + ": " + comment;
-                            if (liveStreamPanel != null) {
-                                liveStreamPanel.addComment(comment, isOwner);
-                            } else if (roomOwnerPanel != null) {
-                                roomOwnerPanel.addComment(comment, isOwner);
-
-                            } else if (roomParticipantPanel != null) {
-                                roomParticipantPanel.addComment(comment, isOwner);
-                            }
-                        }
-                    }
                 } else if (message.startsWith("ROOM_CLOSED:")) {
                     String roomName = message.split(":")[1];
-                    System.out.println("Received room closed message for room á hahaahhaha: " + roomName);
+                    System.out.println("Received room closed message for room: " + roomName);
                     if (currentRoom != null && currentRoom.equals(roomName)) {
                         toaster.success("The room has been closed by the owner.");
                         JOptionPane.showMessageDialog(frame, "The room has been closed by the owner.", "Room Closed",
@@ -152,6 +135,42 @@ public class LivestreamClient {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void listenForMulticastMessages(String multicastAddress, int multicastPort) {
+        new Thread(() -> {
+            try (MulticastSocket socket = new MulticastSocket(multicastPort)) {
+                InetAddress group = InetAddress.getByName(multicastAddress);
+                socket.joinGroup(group);
+                byte[] buffer = new byte[1024];
+                while (true) {
+                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                    socket.receive(packet);
+                    String message = new String(packet.getData(), 0, packet.getLength());
+                    System.out.println("Received multicast message: " + message);
+                    if (message.startsWith("COMMENT:")) {
+                        String[] parts = message.split(":");
+                        if (parts.length == 5) {
+                            String sender = parts[1];
+                            String comment = parts[2];
+                            boolean isOwner = sender.equals(getRoomOwner(currentRoom));
+                            if (!sender.equals(username) && currentRoom != null && currentRoom.equals(parts[3])) {
+                                comment = sender + ": " + comment;
+                                if (liveStreamPanel != null) {
+                                    liveStreamPanel.addComment(comment, isOwner);
+                                } else if (roomOwnerPanel != null) {
+                                    roomOwnerPanel.addComment(comment, isOwner);
+                                } else if (roomParticipantPanel != null) {
+                                    roomParticipantPanel.addComment(comment, isOwner);
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     private static String getRoomOwner(String roomName) {
@@ -184,16 +203,16 @@ public class LivestreamClient {
                         roomListModel.addElement(
                                 roomName + " (Owner: " + owner + ", Participants: " + participantCount + ")");
 
-                                if (currentRoom != null && currentRoom.equals(roomName) && roomOwnerPanel != null) {
-                                    roomOwnerPanel.updateParticipantsCount(Integer.parseInt(participantCount));
-                                } else if (currentRoom != null && currentRoom.equals(roomName) && roomParticipantPanel != null) {
-                                    participantCounts = Integer.parseInt(participantCount);
-                                    roomParticipantPanel.updateParticipantsCount(Integer.parseInt(participantCount));
-                                } else {
-                                    System.out.println("Condition not met for participant counts update: " +
-                                            "currentRoom=" + currentRoom + ", roomName=" + roomName +
-                                            ", roomParticipantPanel=" + roomParticipantPanel);
-                                }
+                        if (currentRoom != null && currentRoom.equals(roomName) && roomOwnerPanel != null) {
+                            roomOwnerPanel.updateParticipantsCount(Integer.parseInt(participantCount));
+                        } else if (currentRoom != null && currentRoom.equals(roomName) && roomParticipantPanel != null) {
+                            participantCounts = Integer.parseInt(participantCount);
+                            roomParticipantPanel.updateParticipantsCount(Integer.parseInt(participantCount));
+                        } else {
+                            System.out.println("Condition not met for participant counts update: " +
+                                    "currentRoom=" + currentRoom + ", roomName=" + roomName +
+                                    ", roomParticipantPanel=" + roomParticipantPanel);
+                        }
                     } else {
                         System.err.println("Invalid room details: " + room);
                     }
@@ -223,6 +242,11 @@ public class LivestreamClient {
         sendBroadcastMessage("JOIN_ROOM:" + username + ":" + userId + ":" + roomName);
         checkRoomOwnerAfterUpdate = true;
         showRoomParticipantPanel();
+
+        Room room = getRoomDetails(roomName);
+        if (room != null) {
+            listenForMulticastMessages(room.getMulticastAddress(), room.getMulticastPort());
+        }
     }
 
     public static void closeRoom() {
@@ -297,5 +321,29 @@ public class LivestreamClient {
 
     public static Integer getParticipantCounts() {
         return participantCounts;
+    }
+
+    public static Room getRoomDetails(String roomName) {
+        for (int i = 0; i < roomListModel.size(); i++) {
+            String roomDetails = roomListModel.get(i);
+            if (roomDetails.startsWith(roomName + " (Owner: ")) {
+                String[] details = roomDetails.split("\\|");
+                if (details.length == 4) {
+                    String owner = details[1];
+                    int participantCount = Integer.parseInt(details[2]);
+                    // Assuming multicast address and port are part of the details
+                    String multicastAddress = details[3];
+                    int multicastPort = Integer.parseInt(details[4]);
+
+                    Room room = new Room();
+                    room.setRoomName(roomName);
+                    room.setMulticastAddress(multicastAddress);
+                    room.setMulticastPort(multicastPort);
+
+                    return room;
+                }
+            }
+        }
+        return null;
     }
 }

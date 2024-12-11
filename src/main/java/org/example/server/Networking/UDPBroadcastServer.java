@@ -25,11 +25,9 @@ public class UDPBroadcastServer extends Thread {
 
     @Override
     public void run() {
-        MulticastSocket socket = null;
+        DatagramSocket socket = null;
         try {
-            InetAddress group = InetAddress.getByName(ServerConfig.BROADCAST_ADDRESS);
-            socket = new MulticastSocket(ServerConfig.BROADCAST_PORT);
-            socket.joinGroup(group);
+            socket = new DatagramSocket(ServerConfig.BROADCAST_PORT);
             byte[] buffer = new byte[1024];
             System.out.println("UDP server is running on port " + ServerConfig.BROADCAST_PORT + "...");
 
@@ -44,12 +42,7 @@ public class UDPBroadcastServer extends Thread {
             e.printStackTrace();
         } finally {
             if (socket != null && !socket.isClosed()) {
-                try {
-                    socket.leaveGroup(InetAddress.getByName(ServerConfig.BROADCAST_ADDRESS));
-                    socket.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                socket.close();
             }
         }
     }
@@ -91,13 +84,27 @@ public class UDPBroadcastServer extends Thread {
                 if (roomName == null || roomName.trim().isEmpty()) {
                     System.out.println("Invalid room name: " + roomName);
                 } else {
-                    roomManager.createRoom(roomName, username, Integer.parseInt(userId));
+                    String multicastAddress = parts.length > 5 ? parts[5] : "224.0.0.1";
+                    int multicastPort = parts.length > 6 ? Integer.parseInt(parts[6]) : 5000;
+
+                    boolean isDuplicate = roomManager.getRooms().values().stream()
+                            .anyMatch(room -> room.getMulticastAddress().equals(multicastAddress)
+                                    && room.getMulticastPort() == multicastPort);
+
+                    if (isDuplicate) {
+                        System.out.println("Multicast address and port combination already in use: " + multicastAddress
+                                + ":" + multicastPort);
+                    } else {
+                        roomManager.createRoom(roomName, username, Integer.parseInt(userId), multicastAddress,
+                                multicastPort);
+                        System.out.println("Room created: " + roomName + " by " + username);
+                    }
                 }
                 sendRoomList(address);
                 break;
             case "CLOSE_ROOM":
                 if (roomManager.getRooms().containsKey(roomName)) {
-                    multicastRoomClosure(roomName);
+                    broadcastRoomClosure(roomName);
                     roomManager.closeRoom(roomName);
                     System.out.println("Room closed: " + roomName);
                 } else {
@@ -125,7 +132,7 @@ public class UDPBroadcastServer extends Thread {
                 if (roomName != null && roomManager.getRooms().containsKey(roomName)) {
                     Room room = roomManager.getRooms().get(roomName);
                     if (!room.hasParticipant(Integer.parseInt(userId))) {
-                        room.addParticipant(new Participant(room.getId(), Integer.parseInt(userId)));
+                        room.addParticipant(new Participant(room.getId(), Integer.parseInt(userId), address));
                         System.out.println("User " + username + " joined room: " + roomName);
                     } else {
                         System.out.println("User " + username + " is already in room: " + roomName);
@@ -145,7 +152,7 @@ public class UDPBroadcastServer extends Thread {
                             Comment commentObj = new Comment(roomId, userIdInt, comment);
                             CommentDAO commentDAO = new CommentDAO();
                             commentDAO.addComment(commentObj);
-                            broadcastComment(roomName, username, comment);
+                            multicastComment(roomName, username, comment);
                         } else {
                             System.out.println("Room not found: " + roomName);
                         }
@@ -161,7 +168,7 @@ public class UDPBroadcastServer extends Thread {
 
     private void sendRoomList(String address) {
         try (DatagramSocket socket = new DatagramSocket()) {
-            InetAddress group = InetAddress.getByName(ServerConfig.BROADCAST_ADDRESS);
+            InetAddress group = InetAddress.getByName(address);
             StringBuilder roomList = new StringBuilder("ROOM_LIST:");
             for (Room room : roomManager.getRooms().values()) {
                 String ownerId = String.valueOf(room.getOwnerId());
@@ -180,22 +187,24 @@ public class UDPBroadcastServer extends Thread {
         }
     }
 
-    private void broadcastComment(String roomName, String username, String comment) {
+    private void multicastComment(String roomName, String username, String comment) {
         Room room = roomManager.getRooms().get(roomName);
         if (room != null) {
-            try (DatagramSocket socket = new DatagramSocket()) {
-                InetAddress group = InetAddress.getByName(ServerConfig.BROADCAST_ADDRESS);
+            try (MulticastSocket socket = new MulticastSocket()) {
+                InetAddress group = InetAddress.getByName(room.getMulticastAddress());
                 String message = "COMMENT:" + username + ":" + comment + ":" + roomName + ":server";
                 byte[] buffer = message.getBytes();
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, ServerConfig.BROADCAST_PORT);
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, room.getMulticastPort());
                 socket.send(packet);
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        } else {
+            System.err.println("Room not found: " + roomName);
         }
     }
 
-    private void multicastRoomClosure(String roomName) {
+    private void broadcastRoomClosure(String roomName) {
         Room room = roomManager.getRooms().get(roomName);
         if (room != null) {
             System.out.println("Broadcasting room closure for room: " + roomName);

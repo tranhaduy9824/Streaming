@@ -11,16 +11,20 @@ public class Room {
     private List<Participant> participants;
     private Timestamp startTime;
     private Timestamp endTime;
+    private String multicastAddress;
+    private int multicastPort;
 
     public Room() {
         this.participants = new ArrayList<>();
     }
 
-    public Room(String roomName, int ownerId) {
+    public Room(String roomName, int ownerId, String multicastAddress, int multicastPort) {
         this.roomName = roomName;
         this.ownerId = ownerId;
         this.participants = new ArrayList<>();
         this.startTime = new Timestamp(System.currentTimeMillis());
+        this.multicastAddress = multicastAddress;
+        this.multicastPort = multicastPort;
     }
 
     public int getId() {
@@ -81,5 +85,21 @@ public class Room {
 
     public void setEndTime(Timestamp endTime) {
         this.endTime = endTime;
+    }
+
+    public String getMulticastAddress() {
+        return multicastAddress;
+    }
+
+    public void setMulticastAddress(String multicastAddress) {
+        this.multicastAddress = multicastAddress;
+    }
+
+    public int getMulticastPort() {
+        return multicastPort;
+    }
+
+    public void setMulticastPort(int multicastPort) {
+        this.multicastPort = multicastPort;
     }
 }
