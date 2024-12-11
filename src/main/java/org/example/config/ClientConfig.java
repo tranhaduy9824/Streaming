@@ -1,6 +1,6 @@
 package org.example.config;
 
 public class ClientConfig {
-    public static final String BROADCAST_ADDRESS = "230.0.0.1"; 
-    public static final int BROADCAST_PORT = 9877;
+    public static final String BROADCAST_ADDRESS = "255.255.255.255";
+    public static final int BROADCAST_PORT = 9878;
 }

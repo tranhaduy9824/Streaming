@@ -8,6 +8,7 @@ import org.example.client.UI.RoomOwnerPanel;
 import org.example.client.UI.RoomParticipantPanel;
 import org.example.client.UI.components.Toaster.Toaster;
 import org.example.config.ClientConfig;
+import org.example.config.ServerConfig;
 
 import javax.swing.*;
 import java.awt.*;
@@ -95,10 +96,11 @@ public class LivestreamClient {
 
     public static boolean sendBroadcastMessage(String message) {
         try (DatagramSocket socket = new DatagramSocket()) {
+            socket.setBroadcast(true);
             InetAddress group = InetAddress.getByName(ClientConfig.BROADCAST_ADDRESS);
             String fullMessage = message + ":" + InetAddress.getLocalHost().getHostAddress();
             byte[] buffer = fullMessage.getBytes();
-            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, ClientConfig.BROADCAST_PORT);
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, ServerConfig.BROADCAST_PORT);
             socket.send(packet);
             return true;
         } catch (IOException e) {
@@ -108,50 +110,60 @@ public class LivestreamClient {
     }
 
     public static void listenForBroadcastMessages() {
-        try (MulticastSocket socket = new MulticastSocket(ClientConfig.BROADCAST_PORT)) {
-            InetAddress group = InetAddress.getByName(ClientConfig.BROADCAST_ADDRESS);
-            socket.joinGroup(group);
+        try (DatagramSocket socket = new DatagramSocket(ClientConfig.BROADCAST_PORT)) {
             byte[] buffer = new byte[1024];
+            System.out.println("Listening for broadcast messages on port " + ClientConfig.BROADCAST_PORT + "...");
+
             while (true) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socket.receive(packet);
                 String message = new String(packet.getData(), 0, packet.getLength());
                 System.out.println("Received broadcast message: " + message);
+
+                // Xử lý thông điệp tùy theo loại message
                 if (message.startsWith("ROOM_LIST:")) {
                     updateRoomList(message.substring(10));
                 } else if (message.startsWith("COMMENT:")) {
-                    String[] parts = message.split(":");
-                    if (parts.length == 5) {
-                        String sender = parts[1];
-                        String comment = parts[2];
-                        boolean isOwner = sender.equals(getRoomOwner(currentRoom));
-                        if (!sender.equals(username) && currentRoom != null && currentRoom.equals(parts[3])) {
-                            comment = sender + ": " + comment;
-                            if (liveStreamPanel != null) {
-                                liveStreamPanel.addComment(comment, isOwner);
-                            } else if (roomOwnerPanel != null) {
-                                roomOwnerPanel.addComment(comment, isOwner);
-
-                            } else if (roomParticipantPanel != null) {
-                                roomParticipantPanel.addComment(comment, isOwner);
-                            }
-                        }
-                    }
+                    handleCommentMessage(message);
                 } else if (message.startsWith("ROOM_CLOSED:")) {
-                    String roomName = message.split(":")[1];
-                    System.out.println("Received room closed message for room á hahaahhaha: " + roomName);
-                    if (currentRoom != null && currentRoom.equals(roomName)) {
-                        toaster.success("The room has been closed by the owner.");
-                        JOptionPane.showMessageDialog(frame, "The room has been closed by the owner.", "Room Closed",
-                                JOptionPane.INFORMATION_MESSAGE);
-                        leaveRoom();
-                    }
+                    handleRoomClosedMessage(message);
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    private static void handleCommentMessage(String message) {
+        String[] parts = message.split(":");
+        if (parts.length == 5) {
+            String sender = parts[1];
+            String comment = parts[2];
+            boolean isOwner = sender.equals(getRoomOwner(currentRoom));
+            if (!sender.equals(username) && currentRoom != null && currentRoom.equals(parts[3])) {
+                comment = sender + ": " + comment;
+                if (liveStreamPanel != null) {
+                    liveStreamPanel.addComment(comment, isOwner);
+                } else if (roomOwnerPanel != null) {
+                    roomOwnerPanel.addComment(comment, isOwner);
+                } else if (roomParticipantPanel != null) {
+                    roomParticipantPanel.addComment(comment, isOwner);
+                }
+            }
+        }
+    }
+
+    private static void handleRoomClosedMessage(String message) {
+        String roomName = message.split(":")[1];
+        System.out.println("Received room closed message for room: " + roomName);
+        if (currentRoom != null && currentRoom.equals(roomName)) {
+            toaster.success("The room has been closed by the owner.");
+            JOptionPane.showMessageDialog(frame, "The room has been closed by the owner.", "Room Closed",
+                    JOptionPane.INFORMATION_MESSAGE);
+            leaveRoom();
+        }
+    }
+
 
     private static String getRoomOwner(String roomName) {
         for (int i = 0; i < roomListModel.size(); i++) {

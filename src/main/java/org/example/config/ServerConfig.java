@@ -16,7 +16,7 @@ public class ServerConfig {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
-        BROADCAST_ADDRESS = properties.getProperty("udp.server.address", "230.0.0.1");
+        BROADCAST_ADDRESS = properties.getProperty("udp.server.address", "255.255.255.255");
         BROADCAST_PORT = Integer.parseInt(properties.getProperty("udp.server.port", "9877"));
         SIGNALING_PORT = Integer.parseInt(properties.getProperty("websocket.server.port", "8080"));
     }
