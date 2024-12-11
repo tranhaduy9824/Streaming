@@ -1,16 +1,15 @@
 package org.example.client.UI;
 
-import javax.swing.*;
-
 import org.example.client.LivestreamClient;
 import org.example.client.UI.components.HyperlinkText;
 import org.example.client.UI.components.TextFieldPassword;
 import org.example.client.UI.components.TextFieldUsername;
-import org.example.client.UI.components.UIUtils;
 import org.example.client.UI.components.Toaster.Toaster;
+import org.example.client.UI.components.UIUtils;
 import org.example.controller.UserController;
 import org.example.server.model.User;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.sql.SQLException;
@@ -25,32 +24,28 @@ public class RegistrationPanel extends JPanel {
     private UserController userController = new UserController();
 
     public RegistrationPanel() {
-        setLayout(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        setLayout(null); // Absolute layout
+        setPreferredSize(new Dimension(800, 500));
+        setBackground(new Color(174,190,201));
 
-        JPanel mainJPanel = getMainJPanel();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        add(mainJPanel, gbc);
+        toaster = new Toaster(this);
 
-        addLogo(mainJPanel);
-        addSeparator(mainJPanel);
-        addUsernameTextField(mainJPanel);
-        addPasswordTextField(mainJPanel);
-        addConfirmPasswordTextField(mainJPanel);
-        addRegisterButton(mainJPanel);
-        addSwitchToLoginButton(mainJPanel);
+        addLogo();
+//        addSeparator();
+        addSignUpLabel();
+        addUsernameTextField();
+        addPasswordTextField();
+        addConfirmPasswordTextField();
+        addRegisterButton();
+        addLoginLink();
+//        addSwitchToLoginButton();
 
-        toaster = new Toaster(mainJPanel);
-        this.setPreferredSize(new Dimension(800, 450));
     }
 
     private JPanel getMainJPanel() {
         JPanel panel = new JPanel();
-        panel.setPreferredSize(new Dimension(800, 450));
-        panel.setBackground(UIUtils.COLOR_BACKGROUND);
+        panel.setPreferredSize(new Dimension(800, 500));
+        panel.setBackground(UIUtils.COLOR_BACKGROUND_REGISTER);
         panel.setLayout(null);
 
         MouseAdapter ma = new MouseAdapter() {
@@ -79,124 +74,87 @@ public class RegistrationPanel extends JPanel {
         return panel;
     }
 
-    private void addLogo(JPanel panel) {
-        JLabel label = new JLabel();
-        label.setFocusable(false);
+    private void addLogo() {
+        JPanel leftPanel = new JPanel();
+        leftPanel.setBackground(new Color(255, 214, 214));
+        leftPanel.setBounds(0, 0, 340, 500);
+        leftPanel.setLayout(null);
 
-        ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getClassLoader().getResource("register.jpg")));
-        Image scaledImage = icon.getImage().getScaledInstance(250, 250, Image.SCALE_SMOOTH);
-        label.setIcon(new ImageIcon(scaledImage));
+        JLabel logoLabel = new JLabel();
+        try {
+            ImageIcon icon = new ImageIcon(Objects.requireNonNull(getClass().getResource("/2.png")));
+            Image scaledImage = icon.getImage().getScaledInstance(340, 500, Image.SCALE_SMOOTH);
+            logoLabel.setIcon(new ImageIcon(scaledImage));
+        } catch (NullPointerException e) {
+            System.err.println("Error: Logo file not found!");
+        }
+        logoLabel.setBounds(0, 0, 340, 500);
+        leftPanel.add(logoLabel);
 
-        label.setBounds(40, 90, 250, 250);
-        panel.add(label);
+        add(leftPanel);
     }
 
-    private void addSeparator(JPanel panel) {
-        JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
-        separator.setForeground(UIUtils.COLOR_OUTLINE);
-        separator.setBounds(340, 80, 1, 290);
-        panel.add(separator);
+    //    private void addSeparator(JPanel panel) {
+//        JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
+//        separator.setForeground(UIUtils.COLOR_OUTLINE);
+//        separator.setBounds(340, 80, 1, 290);
+//        panel.add(separator);
+//    }
+    private void addSignUpLabel() {
+        JLabel signUpLabel = new JLabel("SIGN UP");
+        signUpLabel.setFont(new Font("Segoe UI Black", Font.BOLD, 36));
+        signUpLabel.setForeground(new Color(0, 135, 255));
+        signUpLabel.setBounds(490, 20, 300, 50);
+        add(signUpLabel);
     }
 
-    private void addUsernameTextField(JPanel panel) {
+
+    private void addUsernameTextField() {
+        JLabel usernameLabel = new JLabel("Username");
+        usernameLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        usernameLabel.setBounds(420, 90, 300, 20);
+        add(usernameLabel);
+
         usernameField = new TextFieldUsername();
-        usernameField.setBounds(420, 110, 250, 44);
-
-        usernameField.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                if (usernameField.getText().equals(UIUtils.PLACEHOLDER_TEXT_USERNAME)) {
-                    usernameField.setText("");
-                }
-                usernameField.setForeground(Color.white);
-                usernameField.setBorderColor(UIUtils.COLOR_INTERACTIVE);
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                if (usernameField.getText().isEmpty()) {
-                    usernameField.setText(UIUtils.PLACEHOLDER_TEXT_USERNAME);
-                }
-                usernameField.setForeground(UIUtils.COLOR_OUTLINE);
-                usernameField.setBorderColor(UIUtils.COLOR_OUTLINE);
-            }
-        });
-        panel.add(usernameField);
+        usernameField.setFont(new Font("Arial", Font.PLAIN, 14));
+        usernameField.setBounds(420, 120, 280, 30);
+        add(usernameField);
     }
 
-    private void addPasswordTextField(JPanel panel) {
+    private void addPasswordTextField() {
+        JLabel passwordLabel = new JLabel("Password");
+        passwordLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        passwordLabel.setBounds(420, 160, 300, 20);
+        add(passwordLabel);
+
         passwordField = new TextFieldPassword();
-        passwordField.setBounds(420, 170, 250, 44);
-
-        passwordField.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                passwordField.setForeground(Color.white);
-                passwordField.setBorderColor(UIUtils.COLOR_INTERACTIVE);
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                passwordField.setForeground(UIUtils.COLOR_OUTLINE);
-                passwordField.setBorderColor(UIUtils.COLOR_OUTLINE);
-            }
-        });
-
-        passwordField.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-                if (e.getKeyChar() == KeyEvent.VK_ENTER)
-                    registerEventHandler();
-            }
-        });
-        panel.add(passwordField);
+        passwordField.setFont(new Font("Arial", Font.PLAIN, 14));
+        passwordField.setBounds(420, 190, 280, 30);
+        add(passwordField);
     }
 
-    private void addConfirmPasswordTextField(JPanel panel) {
+    private void addConfirmPasswordTextField() {
+        JLabel confirmPasswordLabel = new JLabel("Confirm Password");
+        confirmPasswordLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        confirmPasswordLabel.setBounds(420, 230, 300, 20);
+        add(confirmPasswordLabel);
+
         confirmPasswordField = new TextFieldPassword();
-        confirmPasswordField.setBounds(420, 230, 250, 44);
-
-        confirmPasswordField.addFocusListener(new FocusListener() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                confirmPasswordField.setForeground(Color.white);
-                confirmPasswordField.setBorderColor(UIUtils.COLOR_INTERACTIVE);
-            }
-
-            @Override
-            public void focusLost(FocusEvent e) {
-                confirmPasswordField.setForeground(UIUtils.COLOR_OUTLINE);
-                confirmPasswordField.setBorderColor(UIUtils.COLOR_OUTLINE);
-            }
-        });
-
-        confirmPasswordField.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-                if (e.getKeyChar() == KeyEvent.VK_ENTER)
-                    registerEventHandler();
-            }
-        });
-        panel.add(confirmPasswordField);
+        confirmPasswordField.setFont(new Font("Arial", Font.PLAIN, 14));
+        confirmPasswordField.setBounds(420, 260, 280, 30);
+        add(confirmPasswordField);
     }
 
-    private void addRegisterButton(JPanel panel) {
-        JLabel registerButton = new JLabel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g;
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(UIUtils.COLOR_INTERACTIVE);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), UIUtils.ROUNDNESS, UIUtils.ROUNDNESS);
-                g2.setColor(Color.white);
-                g2.setFont(UIUtils.FONT_GENERAL_UI);
-                g2.drawString(UIUtils.BUTTON_TEXT_REGISTER, getWidth() / 2 - 30, getHeight() / 2 + 5);
-            }
-        };
 
-        registerButton.setBounds(420, 290, 250, 44);
-        registerButton.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+    private void addRegisterButton() {
+        JButton registerButton = new JButton("Sign Up");
+        registerButton.setBounds(420, 310, 280, 40);
+        registerButton.setBackground(new Color(255, 102, 102));
+        registerButton.setForeground(Color.WHITE);
+        registerButton.setFocusPainted(false);
+        registerButton.setFont(new Font("Arial", Font.BOLD, 14));
+        registerButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
         registerButton.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -205,21 +163,48 @@ public class RegistrationPanel extends JPanel {
 
             @Override
             public void mouseEntered(MouseEvent e) {
-                registerButton.setBackground(UIUtils.COLOR_INTERACTIVE_DARKER);
+                registerButton.setBackground(new Color(255, 80, 80));
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-                registerButton.setBackground(UIUtils.COLOR_INTERACTIVE);
+                registerButton.setBackground(new Color(255, 102, 102));
             }
         });
 
-        panel.add(registerButton);
+        add(registerButton);
     }
 
-    private void addSwitchToLoginButton(JPanel panel) {
-        panel.add(new HyperlinkText(UIUtils.BUTTON_TEXT_LOGIN, 620, 350, () -> {
-            toaster.success("Switching to login panel");
+
+
+//    private void addSwitchToLoginButton(JPanel panel) {
+//        panel.add(new HyperlinkText(UIUtils.BUTTON_TEXT_LOGIN, 620, 350, () -> {
+//            toaster.success("Switching to login panel");
+//            LivestreamClient.showLoginPanel();
+//        }));
+//    }
+
+    private void addLoginLink() {
+        JLabel loginPromptLabel = new JLabel("Already have an account?");
+        loginPromptLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        loginPromptLabel.setBounds(420, 360, 150, 30);
+        add(loginPromptLabel);
+
+        JButton loginButton = new JButton("Login");
+        loginButton.setBounds(580, 360, 90, 30);
+        loginButton.setBackground(Color.WHITE);
+        loginButton.setForeground(new Color(255,153,0));
+        loginButton.setFocusPainted(false);
+        loginButton.setFont(new Font("Arial", Font.BOLD, 12));
+        loginButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        loginButton.addActionListener(e -> LivestreamClient.showLoginPanel());
+        add(loginButton);
+    }
+
+    private void addLoginButton() {
+        System.out.println("Login button clicked");
+        add(new HyperlinkText(UIUtils.BUTTON_TEXT_REGISTER, 625, 320, () -> {
             LivestreamClient.showLoginPanel();
         }));
     }
@@ -229,6 +214,13 @@ public class RegistrationPanel extends JPanel {
         String password = new String(passwordField.getPassword());
         String confirmPassword = new String(confirmPasswordField.getPassword());
 
+        // Check if any of the fields are empty
+        if (username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+            toaster.error("Username, Password, and Confirm Password cannot be empty.");
+            return; // Prevent registration if any field is empty
+        }
+
+        // Check if passwords match
         if (!password.equals(confirmPassword)) {
             toaster.error("Passwords do not match.");
             return;
@@ -242,11 +234,12 @@ public class RegistrationPanel extends JPanel {
                 LivestreamClient.setUserId(String.valueOf(user.getId()));
                 LivestreamClient.showMainPanel();
             } else {
-                toaster.error("Register failed.");
+                toaster.error("Registration failed.");
             }
         } catch (SQLException ex) {
             ex.printStackTrace();
             toaster.error("An error occurred while registering.");
         }
     }
+
 }

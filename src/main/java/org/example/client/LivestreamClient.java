@@ -33,7 +33,7 @@ public class LivestreamClient {
     public static void main(String[] args) {
         frame = new JFrame("Livestream Application");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(840, 550);
+        frame.setSize(800, 500);
         frame.setLayout(new BorderLayout());
 
         showLoginPanel();
