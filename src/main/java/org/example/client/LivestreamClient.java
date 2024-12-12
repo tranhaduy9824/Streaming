@@ -143,6 +143,15 @@ public class LivestreamClient {
             try (MulticastSocket socket = new MulticastSocket(multicastPort)) {
                 InetAddress group = InetAddress.getByName(multicastAddress);
                 socket.joinGroup(group);
+
+                if (isRoomOwner(currentRoom)) {
+                    RoomOwnerPanel.setMulticastSocket(socket);
+                    RoomOwnerPanel.setMulticastGroup(group);
+                } else {
+                    RoomParticipantPanel.setMulticastSocket(socket);
+                    RoomParticipantPanel.setMulticastGroup(group);
+                }
+
                 byte[] buffer = new byte[1024];
                 System.out.println(
                         "Listening for multicast messages on " + multicastAddress + ":" + multicastPort + "...");
@@ -157,6 +166,12 @@ public class LivestreamClient {
                         handleCommentMessage(message);
                     } else if (message.startsWith("ROOM_CLOSED:")) {
                         handleRoomClosedMessage(message);
+                    } else {
+                        if (isRoomOwner(currentRoom)) {
+                            RoomOwnerPanel.handleMessage(message, socket, group);
+                        } else {
+                            RoomParticipantPanel.handleMessage(message, socket, group);
+                        }
                     }
                 }
             } catch (IOException e) {
@@ -263,7 +278,8 @@ public class LivestreamClient {
         sendBroadcastMessage("JOIN_ROOM:" + username + ":" + userId + ":" + roomName);
         checkRoomOwnerAfterUpdate = true;
 
-        listenForMulticastMessages(LivestreamClient.getCurrentMulticastAddress(), LivestreamClient.getCurrentMulticastPort());
+        listenForMulticastMessages(LivestreamClient.getCurrentMulticastAddress(),
+                LivestreamClient.getCurrentMulticastPort());
     }
 
     public static void closeRoom() {

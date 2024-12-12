@@ -8,7 +8,6 @@ import org.example.client.LivestreamClient;
 import org.example.client.UI.components.UIUtils;
 import org.example.config.ServerConfig;
 import org.example.utils.Constants;
-import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
 
 import javax.imageio.ImageIO;
@@ -18,8 +17,12 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Base64;
@@ -27,29 +30,35 @@ import java.util.Objects;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.sound.sampled.*;
+import java.util.List;
+import java.util.ArrayList;
 
 public class RoomOwnerPanel extends JPanel {
-    private JTextPane commentPane;
-    private JTextField commentField;
-    private StyledDocument doc;
-    private JPanel videoPanel;
-    private JPanel screenSharePanel;
-    private JPanel controlPanel;
-    private FrameGrabber grabber;
-    private Java2DFrameConverter converter;
-    private BufferedImage currentImage;
-    private BufferedImage screenImage;
-    private WebSocketClient client;
-    private JLabel participantsLabel;
-    private boolean isCameraOn = true;
-    private boolean isMicOn = true;
-    private boolean isScreenSharing = false;
-    private TargetDataLine microphone;
-    private AudioFormat audioFormat;
-    private boolean running = true;
-    private JLayeredPane layeredPane;
+    public static JTextPane commentPane;
+    public static JTextField commentField;
+    public static StyledDocument doc;
+    public static JPanel videoPanel;
+    public static JPanel screenSharePanel;
+    public static JPanel controlPanel;
+    public static FrameGrabber grabber;
+    public static Java2DFrameConverter converter;
+    public static BufferedImage currentImage;
+    public static BufferedImage screenImage;
+    public static JLabel participantsLabel;
+    public static boolean isCameraOn = true;
+    public static boolean isMicOn = true;
+    public static boolean isScreenSharing = false;
+    public static TargetDataLine microphone;
+    public static AudioFormat audioFormat;
+    public static boolean running = true;
+    public static JLayeredPane layeredPane;
+    public static List<String> participants;
+    public static MulticastSocket multicastSocket;
+    public static InetAddress multicastGroup;
 
     public RoomOwnerPanel() {
+        participants = new ArrayList<>();
+
         setLayout(new BorderLayout());
         setBackground(UIUtils.COLOR_BACKGROUND);
 
@@ -119,9 +128,14 @@ public class RoomOwnerPanel extends JPanel {
         participantsLabel = new JLabel("0");
         participantsLabel.setForeground(UIUtils.OFFWHITE);
         participantsLabel.setFont(UIUtils.FONT_GENERAL_UI);
+        participantsPanel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                showParticipantsDialog();
+            }
+        });
         participantsPanel.add(iconLabel);
         participantsPanel.add(participantsLabel);
-        videoPanel.add(participantsPanel, BorderLayout.NORTH);
 
         controlPanel = new JPanel();
         controlPanel.setBackground(UIUtils.COLOR_BACKGROUND);
@@ -198,8 +212,63 @@ public class RoomOwnerPanel extends JPanel {
         closeRoomButton.setBounds(0, 0, 150, 40);
         layeredPane.add(closeRoomButton, JLayeredPane.DEFAULT_LAYER);
 
-        connectWebSocket();
+        videoPanel.add(participantsPanel, BorderLayout.NORTH);
+
         startVideoStream();
+    }
+
+    private void showParticipantsDialog() {
+        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Participants", Dialog.ModalityType.APPLICATION_MODAL);
+        dialog.setLayout(new BorderLayout());
+        dialog.setSize(300, 400);
+        dialog.setLocationRelativeTo(this);
+
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        for (String participant : participants) {
+            listModel.addElement(participant);
+        }
+
+        JList<String> participantsList = new JList<>(listModel);
+        participantsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        participantsList.setFont(UIUtils.FONT_GENERAL_UI);
+        participantsList.setForeground(UIUtils.OFFWHITE);
+        participantsList.setBackground(UIUtils.COLOR_BACKGROUND);
+
+        JScrollPane scrollPane = new JScrollPane(participantsList);
+        dialog.add(scrollPane, BorderLayout.CENTER);
+
+        JButton kickButton = new JButton("Kick");
+        styleButton(kickButton);
+        kickButton.addActionListener(e -> {
+            String selectedParticipant = participantsList.getSelectedValue();
+            if (selectedParticipant != null) {
+                // kickParticipant(selectedParticipant);
+                listModel.removeElement(selectedParticipant);
+            }
+        });
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(UIUtils.COLOR_BACKGROUND);
+        buttonPanel.add(kickButton);
+        dialog.add(buttonPanel, BorderLayout.SOUTH);
+
+        dialog.setVisible(true);
+    }
+
+    // private void kickParticipant(String participant) {
+    //     // Implement the logic to kick the participant
+    //     // For example, send a message to the server to remove the participant
+    //     if (client != null && client.isOpen()) {
+    //         client.send("KICK:" + participant);
+    //     }
+    //     participants.remove(participant);
+    //     System.out.println("Kicked participant: " + participant);
+    // }
+
+    public void updateParticipantsList(List<String> newParticipants) {
+        participants.clear();
+        participants.addAll(newParticipants);
+        updateParticipantsCount(participants.size());
     }
 
     private void shareScreen() {
@@ -221,11 +290,7 @@ public class RoomOwnerPanel extends JPanel {
                         ImageIO.write(screenImage, "jpg", baos);
                         byte[] imageBytes = baos.toByteArray();
                         String encodedImage = Base64.getEncoder().encodeToString(imageBytes);
-                        if (client != null && client.isOpen()) {
-                            client.send("SCREEN_SHARE:" + encodedImage);
-                        } else {
-                            System.out.println("WebSocket connection is not open.");
-                        }
+                        sendMessage("SCREEN_SHARE:" + encodedImage);
                         SwingUtilities.invokeLater(() -> screenSharePanel.repaint());
                         Thread.sleep(100);
                     }
@@ -233,9 +298,7 @@ public class RoomOwnerPanel extends JPanel {
                     e.printStackTrace();
                 }
             }).start();
-            if (client != null && client.isOpen()) {
-                client.send("SCREEN_SHARE_START");
-            }
+            sendMessage("SCREEN_SHARE_START");
             System.out.println("Screen sharing started");
         } else {
             isScreenSharing = false;
@@ -244,10 +307,8 @@ public class RoomOwnerPanel extends JPanel {
             layeredPane.setLayer(videoPanel, JLayeredPane.DEFAULT_LAYER);
             layeredPane.setLayer(screenSharePanel, JLayeredPane.PALETTE_LAYER);
             videoPanel.add(controlPanel, BorderLayout.SOUTH);
-            screenSharePanel.repaint();
-            if (client != null && client.isOpen()) {
-                client.send("SCREEN_SHARE_STOP");
-            }
+            this.screenSharePanel.repaint();
+            sendMessage("SCREEN_SHARE_STOP");
             System.out.println("Screen sharing stopped");
         }
     }
@@ -302,9 +363,9 @@ public class RoomOwnerPanel extends JPanel {
                         byte[] buffer = new byte[4096];
                         while (isMicOn && running) {
                             int bytesRead = microphone.read(buffer, 0, buffer.length);
-                            if (bytesRead > 0 && client != null && client.isOpen()) {
+                            if (bytesRead > 0) {
                                 String encodedAudio = Base64.getEncoder().encodeToString(buffer);
-                                client.send("AUDIO:" + encodedAudio);
+                                sendMessage("AUDIO:" + encodedAudio);
                             }
                         }
                     }).start();
@@ -347,34 +408,59 @@ public class RoomOwnerPanel extends JPanel {
         });
     }
 
-    private void connectWebSocket() {
-        try {
-            client = new WebSocketClient(
-                    new URI("ws://" + Constants.SERVER_ADDRESS + ":" + ServerConfig.SIGNALING_PORT)) {
-                @Override
-                public void onOpen(ServerHandshake handshakedata) {
-                    System.out.println("Connected to server");
-                }
+    public static void handleMessage(String message, MulticastSocket multicastSocket, InetAddress multicastGroup) {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                setMulticastSocket(multicastSocket);
+                setMulticastGroup(multicastGroup);
 
-                @Override
-                public void onMessage(String message) {
-                    System.out.println("Received: " + message);
+                if (message.startsWith("SCREEN_SHARE:")) {
+                    String base64Image = message.substring("SCREEN_SHARE:".length());
+                    byte[] imageBytes = Base64.getDecoder().decode(base64Image);
+                    BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageBytes));
+                    if (image != null) {
+                        screenImage = image;
+                        screenSharePanel.repaint();
+                    }
+                } else if (message.equals("SCREEN_SHARE_START")) {
+                    RoomOwnerPanel.setScreenSharing(true);
+                } else if (message.equals("SCREEN_SHARE_STOP")) {
+                    RoomOwnerPanel.setScreenSharing(false);
+                } else {
+                    byte[] imageBytes = Base64.getDecoder().decode(message);
+                    BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageBytes));
+                    if (image != null) {
+                        currentImage = image;
+                        videoPanel.repaint();
+                    }
                 }
+            } catch (IllegalArgumentException | IOException e) {
+                e.printStackTrace();
+                System.err.println("Failed to decode message: " + message);
+            }
+        });
+    }
 
-                @Override
-                public void onClose(int code, String reason, boolean remote) {
-                    System.out.println("Connection closed");
-                }
-
-                @Override
-                public void onError(Exception ex) {
-                    ex.printStackTrace();
-                }
-            };
-            client.connect();
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
+    public static void setScreenSharing(boolean isScreenSharing) {
+        RoomOwnerPanel.isScreenSharing = isScreenSharing;
+        if (isScreenSharing) {
+            screenSharePanel.setVisible(true);
+            videoPanel.setBounds(0, 60, 320, 240);
+            screenSharePanel.setBounds(0, 60, 800, 480);
+            layeredPane.setLayer(videoPanel, JLayeredPane.PALETTE_LAYER);
+            layeredPane.setLayer(screenSharePanel, JLayeredPane.DEFAULT_LAYER);
+            screenSharePanel.add(controlPanel, BorderLayout.SOUTH);
+        } else {
+            screenSharePanel.setVisible(false);
+            videoPanel.setBounds(0, 60, 800, 480);
+            layeredPane.setLayer(videoPanel, JLayeredPane.DEFAULT_LAYER);
+            layeredPane.setLayer(screenSharePanel, JLayeredPane.PALETTE_LAYER);
+            videoPanel.add(controlPanel, BorderLayout.SOUTH);
         }
+        screenSharePanel.revalidate();
+        screenSharePanel.repaint();
+        videoPanel.revalidate();
+        videoPanel.repaint();
     }
 
     private void startVideoStream() {
@@ -395,11 +481,7 @@ public class RoomOwnerPanel extends JPanel {
                                 ImageIO.write(currentImage, "jpg", baos);
                                 byte[] imageBytes = baos.toByteArray();
                                 String encodedImage = Base64.getEncoder().encodeToString(imageBytes);
-                                if (client != null && client.isOpen()) {
-                                    client.send(encodedImage);
-                                } else {
-                                    System.out.println("WebSocket connection is not open.");
-                                }
+                                sendMessage(encodedImage);
                             }
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -415,6 +497,16 @@ public class RoomOwnerPanel extends JPanel {
                 e.printStackTrace();
             }
         }).start();
+    }
+
+    private void sendMessage(String message) {
+        try {
+            byte[] buffer = message.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, multicastGroup, LivestreamClient.getCurrentMulticastPort());
+            multicastSocket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void stopAllStreams() {
@@ -452,8 +544,13 @@ public class RoomOwnerPanel extends JPanel {
         @Override
         public void actionPerformed(ActionEvent e) {
             LivestreamClient.closeRoom();
-            if (client != null) {
-                client.close();
+            if (multicastSocket != null) {
+                try {
+                    multicastSocket.leaveGroup(multicastGroup);
+                    multicastSocket.close();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
             }
         }
     }
@@ -466,5 +563,13 @@ public class RoomOwnerPanel extends JPanel {
         } catch (BadLocationException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void setMulticastSocket(MulticastSocket multicastSocket) {
+        RoomOwnerPanel.multicastSocket = multicastSocket;
+    }
+
+    public static void setMulticastGroup(InetAddress multicastGroup) {
+        RoomOwnerPanel.multicastGroup = multicastGroup;
     }
 }
