@@ -9,6 +9,7 @@ import org.example.client.UI.RoomParticipantPanel;
 import org.example.client.UI.components.Toaster.Toaster;
 import org.example.config.ClientConfig;
 import org.example.config.ServerConfig;
+import org.example.server.model.Room;
 
 import javax.swing.*;
 import java.awt.*;
@@ -134,6 +135,33 @@ public class LivestreamClient {
         }
     }
 
+    private static void listenForMulticastMessages(String multicastAddress, int multicastPort) {
+        new Thread(() -> {
+            try (MulticastSocket socket = new MulticastSocket(multicastPort)) {
+                InetAddress group = InetAddress.getByName(multicastAddress);
+                socket.joinGroup(group);
+                byte[] buffer = new byte[1024];
+                System.out.println(
+                        "Listening for multicast messages on " + multicastAddress + ":" + multicastPort + "...");
+
+                while (true) {
+                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+                    socket.receive(packet);
+                    String message = new String(packet.getData(), 0, packet.getLength());
+                    System.out.println("Received multicast message: " + message);
+
+                    if (message.startsWith("COMMENT:")) {
+                        handleCommentMessage(message);
+                    } else if (message.startsWith("ROOM_CLOSED:")) {
+                        handleRoomClosedMessage(message);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
     private static void handleCommentMessage(String message) {
         String[] parts = message.split(":");
         if (parts.length == 5) {
@@ -163,7 +191,6 @@ public class LivestreamClient {
             leaveRoom();
         }
     }
-
 
     private static String getRoomOwner(String roomName) {
         for (int i = 0; i < roomListModel.size(); i++) {
@@ -228,6 +255,25 @@ public class LivestreamClient {
         System.out.println("Attempting to join room: " + roomName);
         sendBroadcastMessage("JOIN_ROOM:" + username + ":" + userId + ":" + roomName);
         checkRoomOwnerAfterUpdate = true;
+
+        Room room = null;
+        for (int i = 0; i < 10; i++) {
+            room = getRoomDetails(currentRoom);
+            if (room != null) {
+                break;
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (room != null) {
+            listenForMulticastMessages(room.getMulticastAddress(), room.getMulticastPort());
+        } else {
+            System.out.println("Failed to retrieve room details for room: " + roomName);
+        }
     }
 
     public static void closeRoom() {
@@ -249,8 +295,9 @@ public class LivestreamClient {
         }
     }
 
-    public static void createRoom(String roomName) {
-        String message = "CREATE_ROOM:" + username + ":" + userId + ":" + roomName;
+    public static void createRoom(String roomName, String multicastAddress, int multicastPort) {
+        String message = "CREATE_ROOM:" + username + ":" + userId + ":" + roomName + ":" + multicastAddress + ":"
+                + multicastPort;
         if (sendBroadcastMessage(message)) {
             System.out.println("Create room request sent successfully for room: " + roomName);
             currentRoom = roomName;
@@ -258,6 +305,14 @@ public class LivestreamClient {
         } else {
             toaster.error("Failed to send create room request.");
         }
+
+        Room room = new Room();
+        room.setRoomName(roomName);
+        room.setOwnerId(Integer.parseInt(userId));
+        room.setMulticastAddress(multicastAddress);
+        room.setMulticastPort(multicastPort);
+
+        listenForMulticastMessages(multicastAddress, multicastPort);
     }
 
     public static void sendComment(String comment) {
@@ -298,5 +353,29 @@ public class LivestreamClient {
         }
         System.out.println("User is not the owner of the room: " + roomName);
         return false;
+    }
+
+    public static Room getRoomDetails(String roomName) {
+        for (int i = 0; i < roomListModel.size(); i++) {
+            String roomDetails = roomListModel.get(i);
+            if (roomDetails.startsWith(roomName + " (Owner: ")) {
+                String[] details = roomDetails.split("\\|");
+                if (details.length >= 4) {
+                    String owner = details[1];
+                    int participantCount = Integer.parseInt(details[2]);
+                    String multicastAddress = details[3];
+                    int multicastPort = Integer.parseInt(details[4]);
+
+                    Room room = new Room();
+                    room.setRoomName(roomName);
+                    room.setOwnerId(Integer.parseInt(owner));
+                    room.setMulticastAddress(multicastAddress);
+                    room.setMulticastPort(multicastPort);
+
+                    return room;
+                }
+            }
+        }
+        return null;
     }
 }

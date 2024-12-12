@@ -25,9 +25,9 @@ public class RoomManager {
         this.participantDAO = new ParticipantDAO();
     }
 
-    public synchronized void createRoom(String roomName, String owner, int ownerId) {
+    public synchronized void createRoom(String roomName, String owner, int ownerId, String multicastAddress, int multicastPort) {
         if (roomName != null && !roomName.trim().isEmpty() && !rooms.containsKey(roomName)) {
-            Room room = new Room(roomName, ownerId);
+            Room room = new Room(roomName, ownerId, multicastAddress, multicastPort);
             try {
                 room = roomDAO.createRoom(room);
                 participantDAO.addParticipant(room.getId(), ownerId);

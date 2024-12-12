@@ -89,7 +89,9 @@ public class MainPanel extends JPanel {
         createRoomButton.addActionListener(e -> {
             String roomName = JOptionPane.showInputDialog(this, "Enter room name:");
             if (roomName != null && !roomName.trim().isEmpty()) {
-                LivestreamClient.createRoom(roomName.trim());
+                String multicastAddress = generateRandomMulticastAddress();
+                int multicastPort = generateRandomMulticastPort();
+                LivestreamClient.createRoom(roomName.trim(), multicastAddress, multicastPort);
             }
         });
         buttonPanel.add(createRoomButton);
@@ -100,6 +102,18 @@ public class MainPanel extends JPanel {
         buttonPanel.add(logoutButton);
 
         add(buttonPanel, BorderLayout.SOUTH);
+    }
+
+    private String generateRandomMulticastAddress() {
+        int firstOctet = 224 + (int) (Math.random() * 16);
+        int secondOctet = (int) (Math.random() * 256);
+        int thirdOctet = (int) (Math.random() * 256);
+        int fourthOctet = (int) (Math.random() * 256);
+        return firstOctet + "." + secondOctet + "." + thirdOctet + "." + fourthOctet;
+    }
+
+    private int generateRandomMulticastPort() {
+        return 5000 + (int) (Math.random() * 1000);
     }
 
     private void styleButton(JButton button) {

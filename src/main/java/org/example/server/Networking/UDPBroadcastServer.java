@@ -3,6 +3,7 @@ package org.example.server.Networking;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.sql.SQLException;
 
 import org.example.config.ClientConfig;
@@ -85,7 +86,18 @@ public class UDPBroadcastServer extends Thread {
                 if (roomName == null || roomName.trim().isEmpty()) {
                     System.out.println("Invalid room name: " + roomName);
                 } else {
-                    roomManager.createRoom(roomName, username, Integer.parseInt(userId));
+                    String multicastAddress = parts.length > 4 ? parts[4] : "224.0.0.1";
+                    int multicastPort = parts.length > 5 ? Integer.parseInt(parts[5]) : 5000;
+            
+                    boolean isDuplicate = roomManager.getRooms().values().stream()
+                        .anyMatch(room -> room.getMulticastAddress().equals(multicastAddress) && room.getMulticastPort() == multicastPort);
+            
+                    if (isDuplicate) {
+                        System.out.println("Multicast address and port combination already in use: " + multicastAddress + ":" + multicastPort);
+                    } else {
+                        roomManager.createRoom(roomName, username, Integer.parseInt(userId), multicastAddress, multicastPort);
+                        System.out.println("Room created: " + roomName + " by " + username);
+                    }
                 }
                 sendRoomList();
                 break;
@@ -121,6 +133,16 @@ public class UDPBroadcastServer extends Thread {
                     if (!room.hasParticipant(Integer.parseInt(userId))) {
                         room.addParticipant(new Participant(room.getId(), Integer.parseInt(userId)));
                         System.out.println("User " + username + " joined room: " + roomName);
+
+                        try {
+                            InetAddress group = InetAddress.getByName(room.getMulticastAddress());
+                            MulticastSocket multicastSocket = new MulticastSocket(room.getMulticastPort());
+                            multicastSocket.joinGroup(group);
+                            System.out.println("User " + username + " joined multicast group: " + room.getMulticastAddress() + ":" + room.getMulticastPort());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            System.out.println("Failed to join multicast group for room: " + roomName);
+                        }
                     } else {
                         System.out.println("User " + username + " is already in room: " + roomName);
                     }
@@ -139,7 +161,7 @@ public class UDPBroadcastServer extends Thread {
                             Comment commentObj = new Comment(roomId, userIdInt, comment);
                             CommentDAO commentDAO = new CommentDAO();
                             commentDAO.addComment(commentObj);
-                            broadcastComment(roomName, username, comment);
+                            multicastComment(roomName, username, comment);
                         } else {
                             System.out.println("Room not found: " + roomName);
                         }
@@ -179,15 +201,16 @@ public class UDPBroadcastServer extends Thread {
         }
     }
 
-    private void broadcastComment(String roomName, String username, String comment) {
+    private void multicastComment(String roomName, String username, String comment) {
         Room room = roomManager.getRooms().get(roomName);
         if (room != null) {
             try (DatagramSocket socket = new DatagramSocket()) {
-                InetAddress group = InetAddress.getByName(ServerConfig.BROADCAST_ADDRESS);
+                InetAddress group = InetAddress.getByName(room.getMulticastAddress());
                 String message = "COMMENT:" + username + ":" + comment + ":" + roomName + ":server";
                 byte[] buffer = message.getBytes();
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, ServerConfig.BROADCAST_PORT);
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, room.getMulticastPort());
                 socket.send(packet);
+                System.out.println("Multicast comment to room: " + roomName);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -197,22 +220,15 @@ public class UDPBroadcastServer extends Thread {
     private void multicastRoomClosure(String roomName) {
         Room room = roomManager.getRooms().get(roomName);
         if (room != null) {
-            System.out.println("Broadcasting room closure for room: " + roomName);
-            for (Participant participant : room.getParticipants()) {
-                try (DatagramSocket socket = new DatagramSocket()) {
-                    InetAddress group = InetAddress.getByName(ServerConfig.BROADCAST_ADDRESS);
-                    String message = "ROOM_CLOSED:" + roomName;
-                    byte[] buffer = message.getBytes();
-                    DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group,
-                            ServerConfig.BROADCAST_PORT);
-                    socket.send(packet);
-                    System.out.println(
-                            "Sent room closed message to "
-                                    + userManager.getUserById(participant.getUserId()).getUsername() + " for room: "
-                                    + roomName);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            try (DatagramSocket socket = new DatagramSocket()) {
+                InetAddress group = InetAddress.getByName(room.getMulticastAddress());
+                String message = "ROOM_CLOSED:" + roomName;
+                byte[] buffer = message.getBytes();
+                DatagramPacket packet = new DatagramPacket(buffer, buffer.length, group, room.getMulticastPort());
+                socket.send(packet);
+                System.out.println("Multicast room closure for room: " + roomName);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
