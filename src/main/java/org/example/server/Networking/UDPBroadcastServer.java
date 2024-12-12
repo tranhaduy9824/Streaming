@@ -188,7 +188,9 @@ public class UDPBroadcastServer extends Thread {
                 roomList.append(room.getRoomName()).append("|")
                         .append(ownerName).append("|")
                         .append(room.getParticipantCount()).append("|")
-                        .append(room.getOwnerId()).append(",");
+                        .append(room.getOwnerId()).append("|")
+                        .append(room.getMulticastAddress()).append("|")
+                        .append(room.getMulticastPort()).append(",");
             }
 
             byte[] buffer = roomList.toString().getBytes();

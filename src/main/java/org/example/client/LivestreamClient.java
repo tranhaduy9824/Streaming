@@ -18,6 +18,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.util.Arrays;
 
 public class LivestreamClient {
     private static JFrame frame;
@@ -31,6 +32,8 @@ public class LivestreamClient {
     private static boolean checkRoomOwnerAfterUpdate = false;
     private static Toaster toaster;
     private static MainPanel mainPanel;
+    private static String currentMulticastAddress;
+    private static int currentMulticastPort;
 
     public static void main(String[] args) {
         frame = new JFrame("Livestream Application");
@@ -214,10 +217,14 @@ public class LivestreamClient {
             for (String room : rooms) {
                 if (!room.isEmpty()) {
                     String[] roomDetails = room.split("\\|");
-                    if (roomDetails.length == 4) {
+                    if (roomDetails.length == 6) {
                         String roomName = roomDetails[0];
                         String owner = roomDetails[1];
                         String participantCount = roomDetails[3];
+
+                        setCurrentMulticastAddress(roomDetails[4]);
+                        setCurrentMulticastPort(Integer.parseInt(roomDetails[5]));
+
                         roomListModel.addElement(
                                 roomName + " (Owner: " + owner + ", Participants: " + participantCount + ")");
 
@@ -256,24 +263,7 @@ public class LivestreamClient {
         sendBroadcastMessage("JOIN_ROOM:" + username + ":" + userId + ":" + roomName);
         checkRoomOwnerAfterUpdate = true;
 
-        Room room = null;
-        for (int i = 0; i < 10; i++) {
-            room = getRoomDetails(currentRoom);
-            if (room != null) {
-                break;
-            }
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        if (room != null) {
-            listenForMulticastMessages(room.getMulticastAddress(), room.getMulticastPort());
-        } else {
-            System.out.println("Failed to retrieve room details for room: " + roomName);
-        }
+        listenForMulticastMessages(LivestreamClient.getCurrentMulticastAddress(), LivestreamClient.getCurrentMulticastPort());
     }
 
     public static void closeRoom() {
@@ -358,13 +348,21 @@ public class LivestreamClient {
     public static Room getRoomDetails(String roomName) {
         for (int i = 0; i < roomListModel.size(); i++) {
             String roomDetails = roomListModel.get(i);
+            System.out.println("Checking room details: " + roomDetails);
             if (roomDetails.startsWith(roomName + " (Owner: ")) {
-                String[] details = roomDetails.split("\\|");
-                if (details.length >= 4) {
-                    String owner = details[1];
-                    int participantCount = Integer.parseInt(details[2]);
-                    String multicastAddress = details[3];
-                    int multicastPort = Integer.parseInt(details[4]);
+                String[] details = roomDetails.split("\\s*\\(Owner:\\s*|,\\s*Participants:\\s*|\\)");
+                System.out.println("Room details split into: " + Arrays.toString(details));
+                if (details.length >= 3) {
+                    String owner = details[1].trim();
+                    int participantCount = Integer.parseInt(details[2].trim());
+
+                    String multicastAddress = getCurrentMulticastAddress();
+                    int multicastPort = getCurrentMulticastPort();
+
+                    System.out.println("Owner: " + owner);
+                    System.out.println("Participant Count: " + participantCount);
+                    System.out.println("Multicast Address: " + multicastAddress);
+                    System.out.println("Multicast Port: " + multicastPort);
 
                     Room room = new Room();
                     room.setRoomName(roomName);
@@ -373,9 +371,28 @@ public class LivestreamClient {
                     room.setMulticastPort(multicastPort);
 
                     return room;
+                } else {
+                    System.out.println("Room details length is less than expected.");
                 }
             }
         }
+        System.out.println("Room not found: " + roomName);
         return null;
+    }
+
+    public static void setCurrentMulticastAddress(String currentMulticastAddress) {
+        LivestreamClient.currentMulticastAddress = currentMulticastAddress;
+    }
+
+    public static void setCurrentMulticastPort(int currentMulticastPort) {
+        LivestreamClient.currentMulticastPort = currentMulticastPort;
+    }
+
+    public static String getCurrentMulticastAddress() {
+        return currentMulticastAddress;
+    }
+
+    public static int getCurrentMulticastPort() {
+        return currentMulticastPort;
     }
 }

@@ -91,6 +91,8 @@ public class MainPanel extends JPanel {
             if (roomName != null && !roomName.trim().isEmpty()) {
                 String multicastAddress = generateRandomMulticastAddress();
                 int multicastPort = generateRandomMulticastPort();
+                LivestreamClient.setCurrentMulticastAddress(multicastAddress);
+                LivestreamClient.setCurrentMulticastPort(multicastPort);
                 LivestreamClient.createRoom(roomName.trim(), multicastAddress, multicastPort);
             }
         });
@@ -142,7 +144,7 @@ public class MainPanel extends JPanel {
         for (String room : rooms) {
             if (!room.trim().isEmpty()) {
                 String[] roomDetails = room.split("\\|");
-                if (roomDetails.length == 4) {
+                if (roomDetails.length == 6) {
                     tableModel.addRow(roomDetails);
                 }
             }
