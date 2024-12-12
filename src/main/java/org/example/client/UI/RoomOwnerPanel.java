@@ -408,61 +408,6 @@ public class RoomOwnerPanel extends JPanel {
         });
     }
 
-    public static void handleMessage(String message, MulticastSocket multicastSocket, InetAddress multicastGroup) {
-        SwingUtilities.invokeLater(() -> {
-            try {
-                setMulticastSocket(multicastSocket);
-                setMulticastGroup(multicastGroup);
-
-                if (message.startsWith("SCREEN_SHARE:")) {
-                    String base64Image = message.substring("SCREEN_SHARE:".length());
-                    byte[] imageBytes = Base64.getDecoder().decode(base64Image);
-                    BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageBytes));
-                    if (image != null) {
-                        screenImage = image;
-                        screenSharePanel.repaint();
-                    }
-                } else if (message.equals("SCREEN_SHARE_START")) {
-                    RoomOwnerPanel.setScreenSharing(true);
-                } else if (message.equals("SCREEN_SHARE_STOP")) {
-                    RoomOwnerPanel.setScreenSharing(false);
-                } else {
-                    byte[] imageBytes = Base64.getDecoder().decode(message);
-                    BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageBytes));
-                    if (image != null) {
-                        currentImage = image;
-                        videoPanel.repaint();
-                    }
-                }
-            } catch (IllegalArgumentException | IOException e) {
-                e.printStackTrace();
-                System.err.println("Failed to decode message: " + message);
-            }
-        });
-    }
-
-    public static void setScreenSharing(boolean isScreenSharing) {
-        RoomOwnerPanel.isScreenSharing = isScreenSharing;
-        if (isScreenSharing) {
-            screenSharePanel.setVisible(true);
-            videoPanel.setBounds(0, 60, 320, 240);
-            screenSharePanel.setBounds(0, 60, 800, 480);
-            layeredPane.setLayer(videoPanel, JLayeredPane.PALETTE_LAYER);
-            layeredPane.setLayer(screenSharePanel, JLayeredPane.DEFAULT_LAYER);
-            screenSharePanel.add(controlPanel, BorderLayout.SOUTH);
-        } else {
-            screenSharePanel.setVisible(false);
-            videoPanel.setBounds(0, 60, 800, 480);
-            layeredPane.setLayer(videoPanel, JLayeredPane.DEFAULT_LAYER);
-            layeredPane.setLayer(screenSharePanel, JLayeredPane.PALETTE_LAYER);
-            videoPanel.add(controlPanel, BorderLayout.SOUTH);
-        }
-        screenSharePanel.revalidate();
-        screenSharePanel.repaint();
-        videoPanel.revalidate();
-        videoPanel.repaint();
-    }
-
     private void startVideoStream() {
         new Thread(() -> {
             try {
@@ -504,6 +449,7 @@ public class RoomOwnerPanel extends JPanel {
             byte[] buffer = message.getBytes();
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length, multicastGroup, LivestreamClient.getCurrentMulticastPort());
             multicastSocket.send(packet);
+            System.out.println("Sent message: " + message + " to " + multicastGroup.getHostAddress() + ":" + LivestreamClient.getCurrentMulticastPort());
         } catch (IOException e) {
             e.printStackTrace();
         }

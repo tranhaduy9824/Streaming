@@ -23,6 +23,9 @@ import java.awt.event.MouseEvent;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 
+import static org.example.client.LivestreamClient.handleCommentMessage;
+import static org.example.client.LivestreamClient.handleRoomClosedMessage;
+
 public class RoomParticipantPanel extends JPanel {
     public static JTextPane commentPane;
     public static JTextField commentField;
@@ -43,7 +46,7 @@ public class RoomParticipantPanel extends JPanel {
         setBackground(UIUtils.COLOR_BACKGROUND);
 
         layeredPane = new JLayeredPane();
-        layeredPane.setPreferredSize(new Dimension(800, 600));
+        layeredPane.setPreferredSize(new Dimension(800, 900));
         add(layeredPane, BorderLayout.CENTER);
 
         JLabel titleLabel = new JLabel("Room Participant - Live Stream");
@@ -177,10 +180,19 @@ public class RoomParticipantPanel extends JPanel {
     public static void handleMessage(String message, MulticastSocket multicastSocket, InetAddress multicastGroup) {
         SwingUtilities.invokeLater(() -> {
             try {
+                RoomOwnerPanel.setMulticastSocket(multicastSocket);
+                RoomOwnerPanel.setMulticastGroup(multicastGroup);
                 setMulticastSocket(multicastSocket);
                 setMulticastGroup(multicastGroup);
-
-                if (message.startsWith("SCREEN_SHARE:")) {
+    
+                System.out.println("Received message: " + message);
+    
+                if (message.startsWith("VIDEO:")) {
+                    String base64Image = message.substring("VIDEO:".length());
+                    byte[] imageBytes = Base64.getDecoder().decode(base64Image);
+                    videoImage = ImageIO.read(new ByteArrayInputStream(imageBytes));
+                    videoPanel.repaint();
+                } else if (message.startsWith("SCREEN_SHARE:")) {
                     String base64Image = message.substring("SCREEN_SHARE:".length());
                     byte[] imageBytes = Base64.getDecoder().decode(base64Image);
                     BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageBytes));
@@ -192,6 +204,10 @@ public class RoomParticipantPanel extends JPanel {
                     setScreenSharing(true);
                 } else if (message.equals("SCREEN_SHARE_STOP")) {
                     setScreenSharing(false);
+                } else if (message.startsWith("COMMENT:")) {
+                    LivestreamClient.handleCommentMessage(message);
+                } else if (message.startsWith("ROOM_CLOSED:")) {
+                    LivestreamClient.handleRoomClosedMessage(message);
                 } else {
                     byte[] imageBytes = Base64.getDecoder().decode(message);
                     BufferedImage image = ImageIO.read(new ByteArrayInputStream(imageBytes));
@@ -267,10 +283,10 @@ public class RoomParticipantPanel extends JPanel {
     }
 
     public static void setMulticastSocket(MulticastSocket multicastSocket) {
-        RoomOwnerPanel.multicastSocket = multicastSocket;
+        RoomParticipantPanel.multicastSocket = multicastSocket;
     }
 
     public static void setMulticastGroup(InetAddress multicastGroup) {
-        RoomOwnerPanel.multicastGroup = multicastGroup;
+        RoomParticipantPanel.multicastGroup = multicastGroup;
     }
 }

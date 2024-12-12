@@ -143,36 +143,24 @@ public class LivestreamClient {
             try (MulticastSocket socket = new MulticastSocket(multicastPort)) {
                 InetAddress group = InetAddress.getByName(multicastAddress);
                 socket.joinGroup(group);
-
-                if (isRoomOwner(currentRoom)) {
-                    RoomOwnerPanel.setMulticastSocket(socket);
-                    RoomOwnerPanel.setMulticastGroup(group);
-                } else {
-                    RoomParticipantPanel.setMulticastSocket(socket);
-                    RoomParticipantPanel.setMulticastGroup(group);
-                }
-
+    
+                System.out.println("Joined multicast group: " + multicastAddress + " on port: " + multicastPort);
+    
+                RoomOwnerPanel.setMulticastSocket(socket);
+                RoomOwnerPanel.setMulticastGroup(group);
+                RoomParticipantPanel.setMulticastSocket(socket);
+                RoomParticipantPanel.setMulticastGroup(group);
+    
                 byte[] buffer = new byte[1024];
-                System.out.println(
-                        "Listening for multicast messages on " + multicastAddress + ":" + multicastPort + "...");
-
+                System.out.println("Listening for multicast messages on " + multicastAddress + ":" + multicastPort + "...");
+    
                 while (true) {
                     DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                     socket.receive(packet);
                     String message = new String(packet.getData(), 0, packet.getLength());
                     System.out.println("Received multicast message: " + message);
-
-                    if (message.startsWith("COMMENT:")) {
-                        handleCommentMessage(message);
-                    } else if (message.startsWith("ROOM_CLOSED:")) {
-                        handleRoomClosedMessage(message);
-                    } else {
-                        if (isRoomOwner(currentRoom)) {
-                            RoomOwnerPanel.handleMessage(message, socket, group);
-                        } else {
-                            RoomParticipantPanel.handleMessage(message, socket, group);
-                        }
-                    }
+    
+                    RoomParticipantPanel.handleMessage(message, socket, group);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -180,7 +168,7 @@ public class LivestreamClient {
         }).start();
     }
 
-    private static void handleCommentMessage(String message) {
+    public static void handleCommentMessage(String message) {
         String[] parts = message.split(":");
         if (parts.length == 5) {
             String sender = parts[1];
@@ -199,7 +187,7 @@ public class LivestreamClient {
         }
     }
 
-    private static void handleRoomClosedMessage(String message) {
+    public static void handleRoomClosedMessage(String message) {
         String roomName = message.split(":")[1];
         System.out.println("Received room closed message for room: " + roomName);
         if (currentRoom != null && currentRoom.equals(roomName)) {
