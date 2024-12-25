@@ -11,12 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ParticipantDAO {
-    public void addParticipant(int roomId, int userId) throws SQLException {
-        String query = "INSERT INTO participants (room_id, user_id) VALUES (?, ?)";
+    public void addParticipant(int roomId, int userId, String titleStream) throws SQLException {
+        String query = "INSERT INTO participants (room_id, user_id,title_stream) VALUES (?, ?, ?)";
         try (Connection connection = DatabaseUtils.getConnection();
              PreparedStatement statement = connection.prepareStatement(query)) {
             statement.setInt(1, roomId);
             statement.setInt(2, userId);
+            statement.setString(3, titleStream);
             statement.executeUpdate();
         }
     }
@@ -43,6 +44,7 @@ public class ParticipantDAO {
                 participant.setId(resultSet.getInt("id"));
                 participant.setRoomId(resultSet.getInt("room_id"));
                 participant.setUserId(resultSet.getInt("user_id"));
+                participant.setTitleStream(resultSet.getString("title_stream"));
                 participants.add(participant);
             }
         }

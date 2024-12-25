@@ -1,6 +1,5 @@
 package org.example.client.UI;
 
-import org.example.client.LivestreamClient;
 import org.example.client.UI.components.HyperlinkText;
 import org.example.client.UI.components.TextFieldPassword;
 import org.example.client.UI.components.TextFieldUsername;
@@ -14,6 +13,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.sql.SQLException;
 import java.util.Objects;
+import org.example.client.LivestreamClientJFrame;
 
 public class LoginPanel extends JPanel {
 
@@ -170,7 +170,7 @@ public class LoginPanel extends JPanel {
 
 //        signUpButton.addActionListener(e -> addRegisterButton());
         signUpButton.addActionListener(e -> {
-            LivestreamClient.showRegistrationPanel();
+            LivestreamClientJFrame.showRegistrationPanel();
         });
 
 
@@ -180,7 +180,7 @@ public class LoginPanel extends JPanel {
     private void addRegisterButton() {
         System.out.println("Sign Up button clicked");
         add(new HyperlinkText(UIUtils.BUTTON_TEXT_REGISTER, 625, 320, () -> {
-            LivestreamClient.showRegistrationPanel();
+            LivestreamClientJFrame.showRegistrationPanel();
         }));
     }
 
@@ -198,10 +198,10 @@ public class LoginPanel extends JPanel {
             User user = userController.login(username, password);
             if (user != null) {
                 String message = "LOGIN:" + username + ":" + password;
-                if (LivestreamClient.sendBroadcastMessage(message)) {
-                    LivestreamClient.setUsername(username);
-                    LivestreamClient.setUserId(String.valueOf(user.getId()));
-                    LivestreamClient.showMainPanel();
+                if (LivestreamClientJFrame.sendBroadcastMessage(message)) {
+                    LivestreamClientJFrame.setUsername(username);
+                    LivestreamClientJFrame.setUserId(String.valueOf(user.getId()));
+                    LivestreamClientJFrame.showMainPanel();
                 } else {
                     toaster.error("Login failed");
                 }

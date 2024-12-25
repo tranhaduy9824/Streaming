@@ -1,26 +1,30 @@
 package org.example.client.UI;
 
-import javax.swing.*;
-import javax.swing.text.*;
 import org.example.client.LivestreamClient;
 import org.example.client.UI.components.UIUtils;
 import org.example.config.ServerConfig;
 import org.example.utils.Constants;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
+
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Base64;
 import java.util.Objects;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 
 public class RoomParticipantPanel extends JPanel {
     private JTextPane commentPane;

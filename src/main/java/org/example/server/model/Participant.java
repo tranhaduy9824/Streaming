@@ -4,6 +4,7 @@ public class Participant {
     private int id;
     private int roomId;
     private int userId;
+    private String titleStream;
 
     public Participant() {
     }
@@ -35,5 +36,11 @@ public class Participant {
 
     public void setUserId(int userId) {
         this.userId = userId;
+    }
+    public String getTitleStream(){
+        return titleStream;
+    }
+    public void setTitleStream(String titleStream){
+        this.titleStream = titleStream;
     }
 }

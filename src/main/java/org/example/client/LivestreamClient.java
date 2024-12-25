@@ -286,6 +286,7 @@ public class LivestreamClient {
     }
 
     public static void createRoom(String roomName, String multicastAddress, int multicastPort) {
+        setCurrentMulticastPort(multicastPort);
         String message = "CREATE_ROOM:" + username + ":" + userId + ":" + roomName + ":" + multicastAddress + ":"
                 + multicastPort;
         if (sendBroadcastMessage(message)) {
@@ -304,6 +305,8 @@ public class LivestreamClient {
 
         listenForMulticastMessages(multicastAddress, multicastPort);
     }
+
+
 
     public static void sendComment(String comment) {
         if (currentRoom != null) {

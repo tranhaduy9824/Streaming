@@ -15,6 +15,6 @@ public class Constants {
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
-        SERVER_ADDRESS = address;
+        SERVER_ADDRESS = "192.168.1.17";
     }
 }
