@@ -5,8 +5,9 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
+import static java.awt.Cursor.HAND_CURSOR;
+import static java.awt.Cursor.getPredefinedCursor;
 import static org.example.client.UI.components.UIUtils.*;
-import static java.awt.Cursor.*;
 
 public class HyperlinkText extends JLabel {
     public HyperlinkText(String hyperlinkText, int xPos, int yPos, Runnable hyperlinkAction) {

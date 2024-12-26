@@ -1,12 +1,12 @@
 package org.example.server;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
 import org.example.config.ServerConfig;
 import org.example.server.Networking.UDPBroadcastServer;
 import org.example.server.Networking.WebRTCSignalingServer;
 import org.example.server.manager.UserManager;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 public class LivestreamServerMain {
     public static void main(String[] args) {

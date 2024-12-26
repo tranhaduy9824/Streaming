@@ -1,5 +1,6 @@
 package org.example.server.Networking;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -89,10 +90,10 @@ public class UDPBroadcastServer extends Thread {
                 } else {
                     String multicastAddress = parts.length > 4 ? parts[4] : "224.0.0.1";
                     int multicastPort = parts.length > 5 ? Integer.parseInt(parts[5]) : 5000;
-
+            
                     boolean isDuplicate = roomManager.getRooms().values().stream()
-                            .anyMatch(room -> room.getMulticastAddress().equals(multicastAddress) && room.getMulticastPort() == multicastPort);
-
+                        .anyMatch(room -> room.getMulticastAddress().equals(multicastAddress) && room.getMulticastPort() == multicastPort);
+            
                     if (isDuplicate) {
                         System.out.println("Multicast address and port combination already in use: " + multicastAddress + ":" + multicastPort);
                     } else {

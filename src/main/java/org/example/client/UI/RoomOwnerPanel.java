@@ -6,19 +6,16 @@ import org.bytedeco.javacv.Java2DFrameConverter;
 import org.bytedeco.javacv.VideoInputFrameGrabber;
 import org.example.client.LivestreamClientJFrame;
 import org.example.client.UI.components.UIUtils;
+import org.example.config.ServerConfig;
+import org.example.utils.Constants;
+import org.java_websocket.handshake.ServerHandshake;
 
 import javax.imageio.ImageIO;
-import javax.sound.sampled.*;
 import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Style;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
+import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -26,10 +23,16 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.util.ArrayList;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Base64;
-import java.util.List;
 import java.util.Objects;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import javax.sound.sampled.*;
+import java.util.List;
+import java.util.ArrayList;
+import org.example.client.LivestreamClientJFrame;
 
 public class RoomOwnerPanel extends JPanel {
     public static JTextPane commentPane;
@@ -260,7 +263,7 @@ public class RoomOwnerPanel extends JPanel {
 
     // private void kickParticipant(String participant) {
     //     // Implement the logic to kick the participant
-    //     // For ducdoan, send a message to the server to remove the participant
+    //     // For example, send a message to the server to remove the participant
     //     if (client != null && client.isOpen()) {
     //         client.send("KICK:" + participant);
     //     }

@@ -1,0 +1,20 @@
+
+//Kiểm tra trạng thái dự án:
+
+git status
+
+//Nếu có thay đổi chưa được stage:
+
+git add .
+
+//Sau đó commit các thay đổi:
+
+git commit -m "Your commit message"
+
+//Đẩy mã nguồn lên nhánh chính (main hoặc master):
+
+git push -u origin main
+
+//Hoặc nếu repository dùng nhánh mặc định là master:
+
+git push -u origin master

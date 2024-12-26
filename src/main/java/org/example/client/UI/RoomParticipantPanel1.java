@@ -1,19 +1,11 @@
 package org.example.client.UI;
 
-import org.example.client.LivestreamClientJFrame;
-import org.example.client.UI.components.UIUtils;
-import org.example.config.ServerConfig;
-import org.example.utils.Constants;
-import org.java_websocket.client.WebSocketClient;
-import org.java_websocket.handshake.ServerHandshake;
-
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Style;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -23,10 +15,24 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
+import org.example.client.LivestreamClientJFrame;
+import org.example.client.UI.components.UIUtils;
+import org.example.config.ServerConfig;
+import org.example.utils.Constants;
+import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.handshake.ServerHandshake;
 
 
 public class RoomParticipantPanel1 extends JPanel {
@@ -118,6 +124,7 @@ public class RoomParticipantPanel1 extends JPanel {
         JButton leaveRoomButton = new JButton(leaveRomIcon);
         styleButton(leaveRoomButton);
         leaveRoomButton.addActionListener(new LeaveRoomActionListener());
+        controlPanel.add(leaveRoomButton);
         
         //--------------commentPane---------------------------------------
         commentPane.setEditable(false);
@@ -153,8 +160,8 @@ public class RoomParticipantPanel1 extends JPanel {
             }
         });
     }
-    
-        
+
+
     private void connectWebSocket() {
         try {
             client = new WebSocketClient(
@@ -210,7 +217,7 @@ public class RoomParticipantPanel1 extends JPanel {
             e.printStackTrace();
         }
     }
-        
+
     private void setScreenSharing(boolean isScreenSharing) {
         this.isScreenSharing = isScreenSharing;
         if (isScreenSharing) {
@@ -259,7 +266,7 @@ public class RoomParticipantPanel1 extends JPanel {
     public void addComment(String comment, boolean isOwner) {
         try {
             Style style = doc.addStyle("Style", null);
-            StyleConstants.setForeground(style, isOwner ? Color.RED : Color.WHITE);
+            StyleConstants.setForeground(style, isOwner ? Color.RED : Color.BLACK);
             doc.insertString(doc.getLength(), comment + "\n", style);
         } catch (BadLocationException e) {
             e.printStackTrace();
@@ -459,9 +466,8 @@ public class RoomParticipantPanel1 extends JPanel {
                     .addComponent(jLabel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(jPanel5Layout.createSequentialGroup()
                         .addComponent(commentField, javax.swing.GroupLayout.PREFERRED_SIZE, 112, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(sendButton, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(sendButton, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(jScrollPane1))
                 .addContainerGap())
         );
@@ -510,7 +516,7 @@ public class RoomParticipantPanel1 extends JPanel {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(controlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addComponent(controlPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 29, Short.MAX_VALUE))
                     .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
         );
     }// </editor-fold>//GEN-END:initComponents

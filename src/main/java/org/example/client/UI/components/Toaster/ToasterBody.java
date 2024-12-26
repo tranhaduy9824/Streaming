@@ -1,9 +1,8 @@
 package org.example.client.UI.components.Toaster;
 
-import javax.swing.*;
-
 import org.example.client.UI.components.UIUtils;
 
+import javax.swing.*;
 import java.awt.*;
 
 class ToasterBody extends JPanel {

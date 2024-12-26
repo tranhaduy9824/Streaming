@@ -29,7 +29,7 @@ public class RegistrationPanel extends JPanel {
         setBackground(new Color(174,190,201));
 
         toaster = new Toaster(this);
-
+        
         addLogo();
 //        addSeparator();
         addSignUpLabel();
@@ -39,7 +39,7 @@ public class RegistrationPanel extends JPanel {
         addRegisterButton();
         addLoginLink();
 //        addSwitchToLoginButton();
-
+        
     }
 
     private JPanel getMainJPanel() {
@@ -94,7 +94,7 @@ public class RegistrationPanel extends JPanel {
         add(leftPanel);
     }
 
-    //    private void addSeparator(JPanel panel) {
+//    private void addSeparator(JPanel panel) {
 //        JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
 //        separator.setForeground(UIUtils.COLOR_OUTLINE);
 //        separator.setBounds(340, 80, 1, 290);
@@ -108,7 +108,7 @@ public class RegistrationPanel extends JPanel {
         add(signUpLabel);
     }
 
-
+    
     private void addUsernameTextField() {
         JLabel usernameLabel = new JLabel("Username");
         usernameLabel.setFont(new Font("Arial", Font.PLAIN, 14));
@@ -132,7 +132,7 @@ public class RegistrationPanel extends JPanel {
         passwordField.setBounds(420, 190, 280, 30);
         add(passwordField);
     }
-
+    
     private void addConfirmPasswordTextField() {
         JLabel confirmPasswordLabel = new JLabel("Confirm Password");
         confirmPasswordLabel.setFont(new Font("Arial", Font.PLAIN, 14));
@@ -174,8 +174,8 @@ public class RegistrationPanel extends JPanel {
 
         add(registerButton);
     }
-
-
+    
+    
 
 //    private void addSwitchToLoginButton(JPanel panel) {
 //        panel.add(new HyperlinkText(UIUtils.BUTTON_TEXT_LOGIN, 620, 350, () -> {
@@ -183,7 +183,7 @@ public class RegistrationPanel extends JPanel {
 //            LivestreamClient.showLoginPanel();
 //        }));
 //    }
-
+    
     private void addLoginLink() {
         JLabel loginPromptLabel = new JLabel("Already have an account?");
         loginPromptLabel.setFont(new Font("Arial", Font.PLAIN, 12));
@@ -201,7 +201,7 @@ public class RegistrationPanel extends JPanel {
         loginButton.addActionListener(e -> LivestreamClientJFrame.showLoginPanel());
         add(loginButton);
     }
-
+        
     private void addLoginButton() {
         System.out.println("Login button clicked");
         add(new HyperlinkText(UIUtils.BUTTON_TEXT_REGISTER, 625, 320, () -> {
@@ -209,37 +209,37 @@ public class RegistrationPanel extends JPanel {
         }));
     }
 
-    private void registerEventHandler() {
-        String username = usernameField.getText();
-        String password = new String(passwordField.getPassword());
-        String confirmPassword = new String(confirmPasswordField.getPassword());
+private void registerEventHandler() {
+    String username = usernameField.getText();
+    String password = new String(passwordField.getPassword());
+    String confirmPassword = new String(confirmPasswordField.getPassword());
 
-        // Check if any of the fields are empty
-        if (username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
-            toaster.error("Username, Password, and Confirm Password cannot be empty.");
-            return; // Prevent registration if any field is empty
-        }
-
-        // Check if passwords match
-        if (!password.equals(confirmPassword)) {
-            toaster.error("Passwords do not match.");
-            return;
-        }
-
-        try {
-            User user = userController.register(username, password);
-            String message = "REGISTER:" + username + ":" + password;
-            if (LivestreamClientJFrame.sendBroadcastMessage(message)) {
-                LivestreamClientJFrame.setUsername(user.getUsername());
-                LivestreamClientJFrame.setUserId(String.valueOf(user.getId()));
-                LivestreamClientJFrame.showMainPanel();
-            } else {
-                toaster.error("Registration failed.");
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            toaster.error("An error occurred while registering.");
-        }
+    // Check if any of the fields are empty
+    if (username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+        toaster.error("Username, Password, and Confirm Password cannot be empty.");
+        return; // Prevent registration if any field is empty
     }
+
+    // Check if passwords match
+    if (!password.equals(confirmPassword)) {
+        toaster.error("Passwords do not match.");
+        return;
+    }
+
+    try {
+        User user = userController.register(username, password);
+        String message = "REGISTER:" + username + ":" + password;
+        if (LivestreamClientJFrame.sendBroadcastMessage(message)) {
+            LivestreamClientJFrame.setUsername(user.getUsername());
+            LivestreamClientJFrame.setUserId(String.valueOf(user.getId()));
+            LivestreamClientJFrame.showMainPanel();
+        } else {
+            toaster.error("Registration failed.");
+        }
+    } catch (SQLException ex) {
+        ex.printStackTrace();
+        toaster.error("An error occurred while registering.");
+    }
+}
 
 }

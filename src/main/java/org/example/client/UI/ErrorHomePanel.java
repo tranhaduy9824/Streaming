@@ -1,6 +1,10 @@
 package org.example.client.UI;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import javax.swing.JPanel;
 import javax.swing.*;
+import org.example.client.UI.items.VideoItemPanel;
 
 public class ErrorHomePanel extends JPanel {
 

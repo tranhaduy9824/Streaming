@@ -14,10 +14,10 @@ public class UIUtils {
     public static final Color COLOR_BACKGROUND_MAIN = new Color(172,201,214);
 
     public static final Color COLOR_INTERACTIVE = new Color(108, 216, 158);
-    public static final Color COLOR_INTERACTIVE_DARKER = new Color(87, 171, 127);
+    public static final Color COLOR_INTERACTIVE_DARKER = new Color(87, 171, 127);    
     public static final Color COLOR_BTN_LOGIN= new Color(255, 102, 102);
 
-
+    
     public static final Color OFFWHITE = new Color(229, 229, 229);
 
     public static final String BUTTON_TEXT_LOGIN = "Login";

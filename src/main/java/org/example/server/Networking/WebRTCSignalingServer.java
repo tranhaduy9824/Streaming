@@ -1,9 +1,9 @@
 package org.example.server.Networking;
 
-import org.java_websocket.server.WebSocketServer;
+import org.example.config.ServerConfig;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
-import org.example.config.ServerConfig;
+import org.java_websocket.server.WebSocketServer;
 
 import java.net.InetSocketAddress;
 import java.util.Collections;

@@ -1,10 +1,14 @@
 package org.example.client.UI;
 
+import java.awt.*;
+import java.io.IOException;
+import javax.swing.*;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import javax.swing.SwingUtilities;
 import org.example.client.LivestreamClientJFrame;
 import org.example.client.UI.items.VideoItemPanel;
-
-import javax.swing.*;
-import java.awt.*;
+import org.example.config.ClientConfig;
 
 public class HomePanel extends JPanel {
     private final LivestreamClientJFrame parentForm;
@@ -67,9 +71,14 @@ public class HomePanel extends JPanel {
             if (roomDetails.length == 7) {
                 String roomName = roomDetails[0];
                 String owner = roomDetails[1];
-                String participants = roomDetails[2];//1221|3|1|6|228.155.139.183|5208
+                String participants = roomDetails[2];// ROOM_LIST:namer|user|view|2|230.108.64.234|5085|title,
 
                 String titleStream = roomDetails[6];
+                
+                LivestreamClientJFrame.setCurrentMulticastAddress(roomDetails[4]);
+                LivestreamClientJFrame.setCurrentMulticastPort(Integer.parseInt(roomDetails[5]));
+                
+                
                 //1221 nameRoom
                 //|3    nameUser
                 //|1    view

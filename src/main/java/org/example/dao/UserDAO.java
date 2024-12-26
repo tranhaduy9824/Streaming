@@ -3,11 +3,7 @@ package org.example.dao;
 import org.example.server.model.User;
 import org.example.utils.DatabaseUtils;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 
 public class UserDAO {
     public User getUserByUsername(String username) throws SQLException {

@@ -167,13 +167,13 @@ public class LoginPanel extends JPanel {
         signUpButton.setFocusPainted(false);
         signUpButton.setFont(new Font("Arial", Font.BOLD, 12));
         signUpButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
+        
 //        signUpButton.addActionListener(e -> addRegisterButton());
         signUpButton.addActionListener(e -> {
             LivestreamClientJFrame.showRegistrationPanel();
         });
 
-
+        
         add(signUpButton);
     }
 
@@ -184,34 +184,34 @@ public class LoginPanel extends JPanel {
         }));
     }
 
-    private void loginEventHandler() {
-        String username = usernameField.getText();
-        String password = new String(passwordField.getPassword());
+private void loginEventHandler() {
+    String username = usernameField.getText();
+    String password = new String(passwordField.getPassword());
 
-        // Check if the username or password is empty
-        if (username.isEmpty() || password.isEmpty()) {
-            toaster.error("Username or Password cannot be empty");
-            return; // Prevent login attempt if either field is empty
-        }
-
-        try {
-            User user = userController.login(username, password);
-            if (user != null) {
-                String message = "LOGIN:" + username + ":" + password;
-                if (LivestreamClientJFrame.sendBroadcastMessage(message)) {
-                    LivestreamClientJFrame.setUsername(username);
-                    LivestreamClientJFrame.setUserId(String.valueOf(user.getId()));
-                    LivestreamClientJFrame.showMainPanel();
-                } else {
-                    toaster.error("Login failed");
-                }
-            } else {
-                toaster.error("Invalid username or password");
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            toaster.error("An error occurred while logging in");
-        }
+    // Check if the username or password is empty
+    if (username.isEmpty() || password.isEmpty()) {
+        toaster.error("Username or Password cannot be empty");
+        return; // Prevent login attempt if either field is empty
     }
+
+    try {
+        User user = userController.login(username, password);
+        if (user != null) {
+            String message = "LOGIN:" + username + ":" + password;
+            if (LivestreamClientJFrame.sendBroadcastMessage(message)) {
+                LivestreamClientJFrame.setUsername(username);
+                LivestreamClientJFrame.setUserId(String.valueOf(user.getId()));
+                LivestreamClientJFrame.showMainPanel();
+            } else {
+                toaster.error("Login failed");
+            }
+        } else {
+            toaster.error("Invalid username or password");
+        }
+    } catch (SQLException ex) {
+        ex.printStackTrace();
+        toaster.error("An error occurred while logging in");
+    }
+}
 
 }

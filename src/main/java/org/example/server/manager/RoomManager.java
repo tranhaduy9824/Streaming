@@ -1,5 +1,6 @@
 package org.example.server.manager;
 
+import org.example.server.video.VideoStreamManager;
 import org.example.dao.ParticipantDAO;
 import org.example.dao.RoomDAO;
 import org.example.server.model.Participant;
@@ -24,10 +25,10 @@ public class RoomManager {
         this.roomDAO = new RoomDAO();
         this.participantDAO = new ParticipantDAO();
     }
-    // String message = "CREATE_ROOM:" + username + ":" + userId + ":" + roomName + ":" + title + ":" + multicastAddress + ":" + multicastPort;
-    public synchronized void createRoom(String roomName,String owner, int ownerId, String multicastAddress, int multicastPort, String titleStream) {
+
+    public synchronized void createRoom(String roomName, String owner, int ownerId, String multicastAddress, int multicastPort,  String titleStream) {
         if (roomName != null && !roomName.trim().isEmpty() && !rooms.containsKey(roomName)) {
-            Room room = new Room(roomName, ownerId, multicastAddress, multicastPort,titleStream);
+            Room room = new Room(roomName, ownerId, multicastAddress, multicastPort, titleStream);
             try {
                 room = roomDAO.createRoom(room);
                 participantDAO.addParticipant(room.getId(), ownerId, titleStream);

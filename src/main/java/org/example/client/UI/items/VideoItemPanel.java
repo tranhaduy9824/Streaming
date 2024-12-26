@@ -1,11 +1,11 @@
 package org.example.client.UI.items;
 
-import org.example.client.LivestreamClientJFrame;
-
+import javax.swing.JPanel;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import org.example.client.LivestreamClientJFrame;
 
 public class VideoItemPanel extends JPanel {
 
@@ -26,15 +26,15 @@ public class VideoItemPanel extends JPanel {
             setStatus(titleStream);
             setPreferredSize(new Dimension(200, 150));
 
-            // Thêm MouseListener cho sự kiện đúp chuột
-            this.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (e.getClickCount() == 2) {
-                        onDoubleClick();
-                    }
-                }
-            });
+//            // Thêm MouseListener cho sự kiện đúp chuột
+//            this.addMouseListener(new MouseAdapter() {
+//                @Override
+//                public void mouseClicked(MouseEvent e) {
+//                    if (e.getClickCount() == 2) {
+//                        onDoubleClick();
+//                    }
+//                }
+//            });
         }
     
         
