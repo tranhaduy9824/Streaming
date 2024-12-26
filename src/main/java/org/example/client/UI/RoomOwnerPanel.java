@@ -213,7 +213,7 @@ public class RoomOwnerPanel extends JPanel {
         } else {
             isScreenSharing = false;
             screenImage = null;
-            videoPanel.setBounds(0, 60, 800, 480);
+            videoPanel.setBounds(0, 0, 800, 480);
             layeredPane.setLayer(videoPanel, JLayeredPane.DEFAULT_LAYER);
             layeredPane.setLayer(screenSharePanel, JLayeredPane.PALETTE_LAYER);
 //            videoPanel.add(controlPanel, BorderLayout.SOUTH);

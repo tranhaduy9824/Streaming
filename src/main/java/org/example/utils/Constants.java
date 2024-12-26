@@ -15,7 +15,7 @@ public class Constants {
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
-        SERVER_ADDRESS = "192.168.1.19"; //ip server || address
+        SERVER_ADDRESS = "192.168.1.20"; //ip server || address
         SERVER_PORT = 8080;
         BROADCAST_PORT = 9877;
 

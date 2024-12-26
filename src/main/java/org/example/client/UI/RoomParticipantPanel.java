@@ -95,8 +95,8 @@ public class RoomParticipantPanel extends JPanel {
            
         //---------------------participantsLabel--------------------------------
         participantsLabel.setText("0 view");
-        participantsLabel.setForeground(UIUtils.OFFWHITE);
-        participantsLabel.setFont(UIUtils.FONT_GENERAL_UI);
+        participantsLabel.setForeground(Color.BLACK);
+//        participantsLabel.setFont(UIUtils.FONT_GENERAL_UI);
 
  
         //--------------controlPanel---------------------------------------
