@@ -36,8 +36,11 @@ public class User {
         this.image = image;
     }
 
+
+
     public User(String username, String fullname, int phonenumber, String email, int cic, String birthday, boolean sex, String password, String address, byte[] image) {
         this.username = username;
+        this.fullname = fullname;
         this.phonenumber = phonenumber;
         this.email = email;
         this.cic = cic;

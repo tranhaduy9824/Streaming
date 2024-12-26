@@ -89,7 +89,7 @@ public class HomePanel extends JPanel {
                 VideoItemPanel videoItem = new VideoItemPanel(
                     titleStream, // Tiêu đề của stream
                     owner + " (" + participants + " participants)",
-                    new ImageIcon(getClass().getResource("/PhotoCover/1.png")),
+                    new ImageIcon(getClass().getResource("/PhotoCover/6.png")),
                     new ImageIcon(getClass().getResource("/ICON/user32.png")),
                     roomName
                 );

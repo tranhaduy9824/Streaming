@@ -149,21 +149,21 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="1" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="jLabel5" pref="561" max="32767" attributes="0"/>
+                      <Component id="jlbStatus" pref="561" max="32767" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jLabel5" alignment="0" pref="28" max="32767" attributes="0"/>
+                  <Component id="jlbStatus" alignment="0" pref="28" max="32767" attributes="0"/>
               </Group>
             </DimensionLayout>
           </Layout>
           <SubComponents>
-            <Component class="javax.swing.JLabel" name="jLabel5">
+            <Component class="javax.swing.JLabel" name="jlbStatus">
               <Properties>
-                <Property name="text" type="java.lang.String" value="&apos;Status&apos;"/>
+                <Property name="text" type="java.lang.String" value="Xin ch&#xe0;o m&#x1ecd;i ng&#x1b0;&#x1edd;i &#x111;&#xe3; &#x111;&#x1ebf;n v&#x1edb;i livestreame c&#x1ee7;a m&#xec;nh"/>
               </Properties>
             </Component>
           </SubComponents>

@@ -4,6 +4,8 @@ import org.example.server.model.Room;
 import org.example.utils.DatabaseUtils;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RoomDAO {
     public Room createRoom(Room room) throws SQLException {
@@ -54,4 +56,39 @@ public class RoomDAO {
             statement.executeUpdate();
         }
     }
+         
+    public List<Room> findRoomById(String idOwner) throws SQLException {
+           String sql = "SELECT * FROM rooms WHERE owner_id = ?";
+           List<Room> rooms = new ArrayList<>();
+
+           try (
+               Connection con = DatabaseUtils.getConnection(); 
+               PreparedStatement pstmt = con.prepareStatement(sql)
+           ) {
+               pstmt.setString(1, idOwner);
+
+               try (ResultSet rs = pstmt.executeQuery()) {
+                   while (rs.next()) {
+                       Room room = createRoom(rs);
+                       rooms.add(room);
+                   }
+               }
+           }
+
+           return rooms;
+       }
+     public Room createRoom (final ResultSet rs) throws SQLException {
+         Room room = new Room();
+         room.setId(rs.getInt("id"));
+         room.setRoomName(rs.getString("name"));
+         room.setOwnerId(rs.getInt("owner_id"));
+         room.setStartTime(rs.getTimestamp("start_time"));
+         room.setTitleStream(rs.getString("title_stream"));
+         room.setEndTime(rs.getTimestamp("end_time"));
+         
+         
+         return room;
+     }
+    
+    
 }
