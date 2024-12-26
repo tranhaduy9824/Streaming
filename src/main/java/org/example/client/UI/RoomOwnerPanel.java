@@ -6,16 +6,19 @@ import org.bytedeco.javacv.Java2DFrameConverter;
 import org.bytedeco.javacv.VideoInputFrameGrabber;
 import org.example.client.LivestreamClientJFrame;
 import org.example.client.UI.components.UIUtils;
-import org.example.config.ServerConfig;
-import org.example.utils.Constants;
-import org.java_websocket.handshake.ServerHandshake;
 
 import javax.imageio.ImageIO;
+import javax.sound.sampled.*;
 import javax.swing.*;
-import javax.swing.text.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -23,16 +26,10 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Base64;
-import java.util.Objects;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import javax.sound.sampled.*;
-import java.util.List;
 import java.util.ArrayList;
-import org.example.client.LivestreamClientJFrame;
+import java.util.Base64;
+import java.util.List;
+import java.util.Objects;
 
 public class RoomOwnerPanel extends JPanel {
     public static JTextPane commentPane;
@@ -121,12 +118,12 @@ public class RoomOwnerPanel extends JPanel {
         JPanel participantsPanel = new JPanel();
         participantsPanel.setOpaque(false);
         participantsPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-
+        
         ImageIcon originalIcon = new ImageIcon(
                 Objects.requireNonNull(getClass().getClassLoader().getResource("group.png")));
         Image scaledImage = originalIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
         ImageIcon scaledIcon = new ImageIcon(scaledImage);
-
+        
         JLabel iconLabel = new JLabel(scaledIcon);
         participantsLabel = new JLabel("0");
         participantsLabel.setForeground(UIUtils.OFFWHITE);
@@ -137,7 +134,7 @@ public class RoomOwnerPanel extends JPanel {
                 showParticipantsDialog();
             }
         });
-
+        
         participantsPanel.add(iconLabel);
         participantsPanel.add(participantsLabel);
 
@@ -197,7 +194,7 @@ public class RoomOwnerPanel extends JPanel {
 
         JPanel commentPanel = new JPanel(new BorderLayout());
         commentPanel.setBackground(UIUtils.COLOR_BACKGROUND);
-
+        
         commentField = new JTextField();
         commentField.setBackground(UIUtils.COLOR_BACKGROUND);
         commentField.setForeground(UIUtils.OFFWHITE);
@@ -207,7 +204,7 @@ public class RoomOwnerPanel extends JPanel {
         JButton sendButton = new JButton("Send");
         styleButton(sendButton);
         sendButton.addActionListener(new SendCommentActionListener());
-
+        
         commentPanel.add(sendButton, BorderLayout.EAST);
         commentPanel.setBounds(0, 740, 800, 40);
         layeredPane.add(commentPanel, JLayeredPane.DEFAULT_LAYER);
@@ -501,7 +498,7 @@ public class RoomOwnerPanel extends JPanel {
                 }
             } catch (FrameGrabber.Exception e) {
                 e.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Error: Could not setup video device. Please check if the device is available and not in use by another application.", "Video Device Error", JOptionPane.ERROR_MESSAGE);
+                 JOptionPane.showMessageDialog(this, "Error: Could not setup video device. Please check if the device is available and not in use by another application.", "Video Device Error", JOptionPane.ERROR_MESSAGE);
             }
         }).start();
     }

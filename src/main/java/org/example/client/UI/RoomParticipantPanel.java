@@ -36,9 +36,9 @@ public class RoomParticipantPanel extends JPanel {
     private WebSocketClient client;
     private JLabel participantsLabel;
     private BufferedImage videoImage;
-    private BufferedImage screenShareImage;
+    private BufferedImage screenShareImage;//
     private JLayeredPane layeredPane;
-    private boolean isScreenSharing;
+    private boolean isScreenSharing;//
 
     public RoomParticipantPanel() {
         setLayout(new BorderLayout());
@@ -102,10 +102,12 @@ public class RoomParticipantPanel extends JPanel {
         JPanel participantsPanel = new JPanel();
         participantsPanel.setOpaque(false);
         participantsPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+        
         ImageIcon originalIcon = new ImageIcon(
                 Objects.requireNonNull(getClass().getClassLoader().getResource("group.png")));
         Image scaledImage = originalIcon.getImage().getScaledInstance(20, 20, Image.SCALE_SMOOTH);
         ImageIcon scaledIcon = new ImageIcon(scaledImage);
+        
         JLabel iconLabel = new JLabel(scaledIcon);
         participantsLabel = new JLabel("0");
         participantsLabel.setForeground(UIUtils.OFFWHITE);

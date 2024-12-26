@@ -20,7 +20,7 @@ import org.example.client.UI.LiveStreamPanel;
 import org.example.client.UI.LoginPanel;
 import org.example.client.UI.RegistrationPanel;
 import org.example.client.UI.RoomOwnerPanel1;
-import org.example.client.UI.RoomParticipantPanel;
+import org.example.client.UI.RoomParticipantPanel1;
 import org.example.client.UI.components.Toaster.Toaster;
 import org.example.client.backend.Backend;
 import org.example.config.ClientConfig;
@@ -33,7 +33,7 @@ public class LivestreamClientJFrame extends JFrame {
     private static MainPanel MainPanel;
     private static LiveStreamPanel liveStreamPanel;
     private static RoomOwnerPanel1 roomOwnerPanel;
-    private static RoomParticipantPanel roomParticipantPanel;
+    private static RoomParticipantPanel1 roomParticipantPanel;
     //private static JTabbedPane tapMain;
     private static JFrame frame2;
     //-----------------------------
@@ -149,7 +149,7 @@ public class LivestreamClientJFrame extends JFrame {
         jbtHome.setBackground(new java.awt.Color(138, 217, 163));
         jbtHome.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         jbtHome.setForeground(new java.awt.Color(255, 255, 255));
-        jbtHome.setIcon(new javax.swing.ImageIcon("D:\\HOC TAP\\HK1 2024 - 2025\\DO AN CO SO 4\\Projects\\StreamingApp\\src\\main\\resources\\ICON\\home2.png")); // NOI18N
+        jbtHome.setIcon(new javax.swing.ImageIcon("D:\\HOC TAP\\HK1 2024 - 2025\\DO AN CO SO 4\\Projects\\StreamingApp\\src\\main\\resources\\ICON2\\home.png")); // NOI18N
         jbtHome.setText("Home");
         jbtHome.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         jbtHome.addActionListener(new java.awt.event.ActionListener() {
@@ -161,7 +161,7 @@ public class LivestreamClientJFrame extends JFrame {
         jbtCreateRoom.setBackground(new java.awt.Color(138, 217, 163));
         jbtCreateRoom.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         jbtCreateRoom.setForeground(new java.awt.Color(255, 255, 255));
-        jbtCreateRoom.setIcon(new javax.swing.ImageIcon("D:\\HOC TAP\\HK1 2024 - 2025\\DO AN CO SO 4\\Projects\\StreamingApp\\src\\main\\resources\\ICON\\home2.png")); // NOI18N
+        jbtCreateRoom.setIcon(new javax.swing.ImageIcon("D:\\HOC TAP\\HK1 2024 - 2025\\DO AN CO SO 4\\Projects\\StreamingApp\\src\\main\\resources\\ICON2\\stream.png")); // NOI18N
         jbtCreateRoom.setText("Live now");
         jbtCreateRoom.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         jbtCreateRoom.addActionListener(new java.awt.event.ActionListener() {
@@ -173,14 +173,14 @@ public class LivestreamClientJFrame extends JFrame {
         jbtFollowing.setBackground(new java.awt.Color(138, 217, 163));
         jbtFollowing.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         jbtFollowing.setForeground(new java.awt.Color(255, 255, 255));
-        jbtFollowing.setIcon(new javax.swing.ImageIcon("D:\\HOC TAP\\HK1 2024 - 2025\\DO AN CO SO 4\\Projects\\StreamingApp\\src\\main\\resources\\ICON\\user32.png")); // NOI18N
+        jbtFollowing.setIcon(new javax.swing.ImageIcon("D:\\HOC TAP\\HK1 2024 - 2025\\DO AN CO SO 4\\Projects\\StreamingApp\\src\\main\\resources\\ICON2\\follow.png")); // NOI18N
         jbtFollowing.setText("Following");
         jbtFollowing.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
 
         jbtAccount.setBackground(new java.awt.Color(138, 217, 163));
         jbtAccount.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         jbtAccount.setForeground(new java.awt.Color(255, 255, 255));
-        jbtAccount.setIcon(new javax.swing.ImageIcon("D:\\HOC TAP\\HK1 2024 - 2025\\DO AN CO SO 4\\Projects\\StreamingApp\\src\\main\\resources\\ICON\\head.png")); // NOI18N
+        jbtAccount.setIcon(new javax.swing.ImageIcon("D:\\HOC TAP\\HK1 2024 - 2025\\DO AN CO SO 4\\Projects\\StreamingApp\\src\\main\\resources\\ICON2\\user32.png")); // NOI18N
         jbtAccount.setText("Account");
         jbtAccount.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
 
@@ -538,7 +538,30 @@ public class LivestreamClientJFrame extends JFrame {
         MainFrame.setVisible(true);
         frame2.dispose();
 
+        showHome();
     }
+
+    public static void showHome(){
+        if (HomePanel == null) {
+            HomePanel = new HomePanel(MainFrame.getInstance());
+            ImageIcon icon = new ImageIcon(MainFrame.getClass().getResource("/ICON/chat-16.png"));
+            MainFrame.tapMain.addTab("HOME", icon, HomePanel);
+        }
+        MainFrame.tapMain.setSelectedComponent(HomePanel);
+    }
+
+    public static void closeHome() {
+        if (HomePanel != null) {
+            // Kiểm tra xem tab "HOME" có đang mở không
+            int tabIndex = MainFrame.tapMain.indexOfComponent(HomePanel);
+            if (tabIndex >= 0) {
+                // Đóng tab
+                MainFrame.tapMain.removeTabAt(tabIndex);
+                HomePanel = null; // Xóa tham chiếu đến HomePanel
+            }
+        }
+    }
+
     public static void showLiveStreamPanel() {
 
     }
@@ -549,6 +572,7 @@ public class LivestreamClientJFrame extends JFrame {
             MainFrame.tapMain.addTab("Room Owner", icon, roomOwnerPanel, "Room Owner");
         }
         MainFrame.tapMain.setSelectedComponent(roomOwnerPanel);
+        closeHome();
     }
 
     public static void closeRoomOwnerPanel() {
@@ -559,15 +583,17 @@ public class LivestreamClientJFrame extends JFrame {
                 roomOwnerPanel = null; // Đặt giá trị roomOwnerPanel thành null để giải phóng tham chiếu
             }
         }
+        showHome();
     }
 
     public static void showRoomParticipantPanel() {
         if (roomParticipantPanel == null) {
-            roomParticipantPanel = new RoomParticipantPanel();
+            roomParticipantPanel = new RoomParticipantPanel1();
             ImageIcon icon = new ImageIcon(MainFrame.getClass().getResource("/ICON/chat-16.png"));
             MainFrame.tapMain.addTab("Room Participant", icon, roomParticipantPanel, "Room Participant");
         }
         MainFrame.tapMain.setSelectedComponent(roomParticipantPanel);
+        closeHome();
     }
 
     public static boolean sendBroadcastMessage(String message) {
@@ -654,8 +680,12 @@ public class LivestreamClientJFrame extends JFrame {
 
                 if (message.startsWith("ROOM_LIST:")) {
                     String roomList = message.substring(10);
-                    SwingUtilities.invokeLater(() -> HomePanel.updateRoomList(roomList));
-                    System.out.println("R--" + roomList);
+
+                    new javax.swing.Timer(2000, e -> {
+                        SwingUtilities.invokeLater(() -> HomePanel.updateRoomList(roomList));
+                        System.out.println("R--" + roomList);
+                    }).setRepeats(false);
+
                 } else if (message.startsWith("COMMENT:")) {
                     handleCommentMessage(message);
                 } else if (message.startsWith("ROOM_CLOSED:")) {
